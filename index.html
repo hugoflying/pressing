@@ -337,22 +337,105 @@
     .scan-result-detail{font-size:13px;color:#567;line-height:1.8;}
     .scan-result-bag{font-size:22px;font-weight:900;color:var(--or);margin-top:8px;}
 
-    /* ── IMPRESSION ── */
+    /* ── IMPRESSION FORMAT TICKET DE CAISSE ── */
     @media print{
+      /* Masque tout sauf la zone d'impression */
       body > *{display:none !important;}
       #print-zone{display:block !important;}
-      .print-page{page-break-after:always;padding:10mm;}
-      .print-label{
-        display:inline-flex;align-items:center;gap:8mm;
-        border:1.5px solid #333;border-radius:6px;
-        padding:6mm 8mm;margin:4mm;
-        width:calc(50% - 12mm);vertical-align:top;
-        box-shadow:none;background:#fff;
+
+      /* Format ticket : 80mm de large (standard imprimante thermique)
+         Si tu as une 58mm, change @page width à 58mm               */
+      @page{
+        size: 80mm auto;
+        margin: 0;
       }
-      .print-label-qr canvas{width:28mm !important;height:28mm !important;}
-      .print-label-info .pname{font-size:13pt;font-weight:bold;margin-bottom:2mm;}
-      .print-label-info .pdetail{font-size:8pt;line-height:1.5;color:#333;}
-      .print-label-info .pbag{font-size:18pt;font-weight:bold;color:#000;margin-top:2mm;}
+
+      body{
+        margin:0;padding:0;
+        background:#fff;
+      }
+
+      /* Un ticket = une page */
+      .ticket{
+        width:80mm;
+        page-break-after: always;
+        padding: 4mm 4mm 6mm;
+        font-family: "Courier New", Courier, monospace;
+        background: #fff;
+        color: #000;
+      }
+      .ticket:last-child{ page-break-after: avoid; }
+
+      /* En-tête */
+      .t-brand{
+        text-align:center;
+        font-size:13pt;
+        font-weight:bold;
+        letter-spacing:2px;
+        margin-bottom:1mm;
+      }
+      .t-tagline{
+        text-align:center;
+        font-size:7pt;
+        letter-spacing:1px;
+        margin-bottom:3mm;
+      }
+      .t-sep{
+        border:none;
+        border-top:1px dashed #000;
+        margin:2mm 0;
+      }
+
+      /* QR code centré */
+      .t-qr{
+        display:flex;
+        justify-content:center;
+        margin: 3mm 0 2mm;
+      }
+      .t-qr canvas, .t-qr img{
+        width: 42mm !important;
+        height: 42mm !important;
+      }
+
+      /* Numéro de sac bien visible */
+      .t-bag{
+        text-align:center;
+        font-size:22pt;
+        font-weight:bold;
+        letter-spacing:1px;
+        margin: 2mm 0 1mm;
+      }
+      .t-bag-sub{
+        text-align:center;
+        font-size:8pt;
+        margin-bottom:3mm;
+        color:#444;
+      }
+
+      /* Infos client */
+      .t-name{
+        font-size:13pt;
+        font-weight:bold;
+        text-align:center;
+        margin-bottom:2mm;
+        word-break:break-word;
+      }
+      .t-row{
+        font-size:8pt;
+        display:flex;
+        justify-content:space-between;
+        margin:1mm 0;
+      }
+      .t-row-label{ color:#555; }
+      .t-row-val{ font-weight:bold; text-align:right; }
+
+      /* Pied */
+      .t-footer{
+        text-align:center;
+        font-size:7pt;
+        color:#666;
+        margin-top:4mm;
+      }
     }
     @media(min-width:480px){
       .filters{justify-content:center;}
@@ -1699,27 +1782,67 @@ document.getElementById("scan-result-bg").addEventListener("click", function(){ 
 document.getElementById("scan-result-close").addEventListener("click", function(){ document.getElementById("scan-result-modal").classList.remove("open"); });
 </script>
 <script>
-// ── QR CODE & ÉTIQUETTES ──────────────────────────────────
+// ── QR CODE & TICKETS DE CAISSE ───────────────────────────
 var qrClient=null;
-var qrLabelCount=1; // nombre d'étiquettes à imprimer
+var qrLabelCount=1;
 
 function buildQrData(c,bagIndex,total){
-  // Données encodées dans le QR : compact pour lisibilité scanners
-  var lines=[
-    "LLF:"+c.id,
-    c.name,
-    "Sac "+(bagIndex+1)+"/"+total,
+  return ["LLF:"+c.id, c.name, "Sac "+(bagIndex+1)+"/"+total,
     c.collectAddress?(c.collectAddress.split(",")[0]):"",
     c.collectDate?fmtDate(c.collectDate):"",
     c.deliverDate?("Livr. "+fmtDate(c.deliverDate)):""
-  ];
-  return lines.filter(Boolean).join("\n");
+  ].filter(Boolean).join("\n");
 }
 
-function makeQrCanvas(data, size){
+function makeQrEl(data, size){
   var wrap=document.createElement("div");
-  new QRCode(wrap,{text:data,width:size,height:size,colorDark:"#1d3a5f",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});
-  return wrap.querySelector("canvas")||wrap.querySelector("img");
+  new QRCode(wrap,{text:data,width:size,height:size,colorDark:"#000000",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});
+  return wrap;
+}
+
+// Construit un ticket DOM pour un sac donné (utilisé pour aperçu ET impression)
+function buildTicket(c, bagIndex, total){
+  var ticket=document.createElement("div");
+  ticket.className="ticket";
+
+  var qrData=buildQrData(c,bagIndex,total);
+
+  var collectAddr=(c.collectAddress||c.address||"").split(",")[0];
+  var deliverAddr=(c.deliverAddress||c.address||"").split(",")[0];
+  var sameAddr=collectAddr===deliverAddr;
+
+  ticket.innerHTML=
+    // En-tête enseigne
+    "<div class='t-brand'>LAISSEZ LES FERS</div>"
+    +"<div class='t-tagline'>PRESSING · BLANCHISSERIE</div>"
+    +"<hr class='t-sep'/>"
+    // QR code — rempli par JS après insertion
+    +"<div class='t-qr' id='tqr-"+bagIndex+"'></div>"
+    // Numéro de sac
+    +"<div class='t-bag'>SAC "+(bagIndex+1)+"/"+total+"</div>"
+    +"<div class='t-bag-sub'>sur "+total+" sac"+(total>1?"s":"")+" au total</div>"
+    +"<hr class='t-sep'/>"
+    // Nom client
+    +"<div class='t-name'>"+esc(c.name)+"</div>"
+    // Adresse(s)
+    +(collectAddr?"<div class='t-row'><span class='t-row-label'>PORT</span><span class='t-row-val'>"+esc(collectAddr)+"</span></div>":"")
+    +(!sameAddr&&deliverAddr?"<div class='t-row'><span class='t-row-label'>LIVRAISON</span><span class='t-row-val'>"+esc(deliverAddr)+"</span></div>":"")
+    // Dates
+    +(c.collectDate?"<div class='t-row'><span class='t-row-label'>COLLECTE</span><span class='t-row-val'>"+fmtDate(c.collectDate)+(c.collectTime?" "+c.collectTime:"")+"</span></div>":"")
+    +(c.deliverDate?"<div class='t-row'><span class='t-row-label'>LIVRAISON</span><span class='t-row-val'>"+fmtDate(c.deliverDate)+(c.deliverTime?" "+c.deliverTime:"")+"</span></div>":"")
+    +(c.price?"<div class='t-row'><span class='t-row-label'>PRIX</span><span class='t-row-val'>"+esc(c.price)+" €</span></div>":"")
+    +"<hr class='t-sep'/>"
+    +"<div class='t-footer'>Merci de votre confiance<br>"+new Date().toLocaleDateString("fr-FR")+"</div>";
+
+  return ticket;
+}
+
+// Injecte le QR dans un ticket déjà dans le DOM
+function injectQr(ticket, bagIndex, qrData, size){
+  var slot=ticket.querySelector("#tqr-"+bagIndex);
+  if(!slot)return;
+  slot.removeAttribute("id"); // évite doublons si appelé 2 fois
+  new QRCode(slot,{text:qrData,width:size,height:size,colorDark:"#000000",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});
 }
 
 function openQrModal(c){
@@ -1734,50 +1857,50 @@ function renderQrModal(){
   var body=document.getElementById("qr-modal-body");
   body.innerHTML="";
 
-  // Compteur d'étiquettes
+  // Compteur
   var counterDiv=document.createElement("div");
-  counterDiv.innerHTML="<div style='font-size:12px;font-weight:700;color:#567;margin-bottom:4px'>Nombre d'étiquettes à imprimer</div>"
+  counterDiv.innerHTML=
+    "<div style='font-size:12px;font-weight:700;color:#567;margin-bottom:6px'>Nombre de sacs (= tickets à imprimer)</div>"
     +"<div class='label-counter'>"
     +"<button id='qr-minus'>−</button>"
     +"<span id='qr-count'>"+qrLabelCount+"</span>"
     +"<button id='qr-plus'>+</button>"
-    +"<span style='font-size:12px;color:#999;margin-left:6px'>(1 par sac)</span>"
-    +"</div>";
+    +"</div>"
+    +"<div style='font-size:11px;color:#789;margin-top:6px'>1 ticket par sac · format 80mm (ticket de caisse)</div>";
   body.appendChild(counterDiv);
   document.getElementById("qr-minus").addEventListener("click",function(){if(qrLabelCount>1){qrLabelCount--;renderQrModal();}});
   document.getElementById("qr-plus").addEventListener("click",function(){if(qrLabelCount<20){qrLabelCount++;renderQrModal();}});
 
-  // Aperçu : on montre la première étiquette
-  var preview=document.createElement("div");
-  preview.innerHTML="<div style='font-size:12px;font-weight:700;color:#567;margin-bottom:6px'>Aperçu étiquette</div>";
-  var labelDiv=document.createElement("div");
-  labelDiv.className="label-preview";
+  // Aperçu du ticket 1 (rendu en miniature avec scale CSS)
+  var previewWrap=document.createElement("div");
+  previewWrap.innerHTML="<div style='font-size:12px;font-weight:700;color:#567;margin-bottom:8px'>Aperçu ticket (sac 1/"+qrLabelCount+")</div>";
 
-  var qrData=buildQrData(c,0,qrLabelCount);
-  var qrEl=makeQrCanvas(qrData,96);
-  if(qrEl)labelDiv.appendChild(qrEl);
+  var scaleBox=document.createElement("div");
+  scaleBox.style.cssText="overflow:hidden;border-radius:10px;border:1.5px solid #e0e0e0;background:#fff;display:flex;justify-content:center;padding:12px 0;";
 
-  var info=document.createElement("div");
-  info.className="label-info";
-  info.innerHTML="<div class='lname'>"+esc(c.name)+"</div>"
-    +"<div class='ldetail'>"
-    +(c.collectAddress?"📍 "+esc(c.collectAddress.split(",")[0])+"<br>":"")
-    +(c.collectDate?"📅 Collecte : "+fmtDate(c.collectDate)+(c.collectTime?" "+c.collectTime:"")+"<br>":"")
-    +(c.deliverDate?"✓ Livraison : "+fmtDate(c.deliverDate)+(c.deliverTime?" "+c.deliverTime:"")+"<br>":"")
-    +(c.bags?"🎒 "+c.bags+" sac(s) total":"")
-    +"</div>"
-    +"<div class='lbag'>Sac 1/"+qrLabelCount+"</div>";
-  labelDiv.appendChild(info);
-  preview.appendChild(labelDiv);
-  body.appendChild(preview);
+  // On génère le ticket à 240px de large (≈ 80mm à l'écran) puis on le scale
+  var ticketPreview=buildTicket(c,0,qrLabelCount);
+  ticketPreview.style.cssText="width:240px;font-family:'Courier New',monospace;color:#000;padding:8px;font-size:9px;";
 
-  // Info comptage
-  if(qrLabelCount>1){
-    var note=document.createElement("div");
-    note.style.cssText="font-size:11px;color:#789;text-align:center;padding:4px 0";
-    note.textContent=qrLabelCount+" étiquettes seront imprimées (une par sac)";
-    body.appendChild(note);
-  }
+  // Override classes pour l'aperçu écran
+  ticketPreview.querySelector(".t-brand").style.cssText="text-align:center;font-size:11px;font-weight:bold;letter-spacing:2px;margin-bottom:1px;";
+  ticketPreview.querySelector(".t-tagline").style.cssText="text-align:center;font-size:7px;letter-spacing:1px;";
+  ticketPreview.querySelector(".t-bag").style.cssText="text-align:center;font-size:18px;font-weight:bold;margin:4px 0 2px;";
+  ticketPreview.querySelector(".t-bag-sub").style.cssText="text-align:center;font-size:7px;margin-bottom:4px;";
+  ticketPreview.querySelector(".t-name").style.cssText="font-size:11px;font-weight:bold;text-align:center;margin-bottom:3px;";
+  ticketPreview.querySelectorAll(".t-row").forEach(function(r){r.style.cssText="font-size:8px;display:flex;justify-content:space-between;margin:1px 0;";});
+  ticketPreview.querySelector(".t-footer").style.cssText="text-align:center;font-size:7px;color:#666;margin-top:6px;";
+
+  scaleBox.appendChild(ticketPreview);
+  previewWrap.appendChild(scaleBox);
+  body.appendChild(previewWrap);
+
+  // Injecte le QR dans l'aperçu (après insertion dans le DOM)
+  setTimeout(function(){
+    injectQr(ticketPreview, 0, buildQrData(c,0,qrLabelCount), 120);
+    var qrSlot=ticketPreview.querySelector(".t-qr");
+    if(qrSlot){qrSlot.style.cssText="display:flex;justify-content:center;margin:6px 0 3px;";}
+  },50);
 }
 
 document.getElementById("qr-modal-bg").addEventListener("click",function(){document.getElementById("qr-modal").classList.remove("open");});
@@ -1789,44 +1912,24 @@ document.getElementById("qr-print-btn").addEventListener("click",function(){
   var zone=document.getElementById("print-zone");
   zone.innerHTML="";
 
-  // Génère toutes les étiquettes
-  var page=document.createElement("div");
-  page.className="print-page";
-
+  // Génère un ticket par sac
+  var tickets=[];
   for(var i=0;i<qrLabelCount;i++){
-    var label=document.createElement("div");
-    label.className="print-label";
-
-    // QR
-    var qrWrap=document.createElement("div");
-    qrWrap.className="print-label-qr";
-    var qrData=buildQrData(c,i,qrLabelCount);
-    var qrEl=makeQrCanvas(qrData,112);
-    if(qrEl)qrWrap.appendChild(qrEl);
-    label.appendChild(qrWrap);
-
-    // Infos texte
-    var info=document.createElement("div");
-    info.className="print-label-info";
-    info.innerHTML="<div class='pname'>"+esc(c.name)+"</div>"
-      +"<div class='pdetail'>"
-      +(c.collectAddress?c.collectAddress.split(",")[0]+"<br>":"")
-      +(c.collectDate?"Collecte : "+fmtDate(c.collectDate)+(c.collectTime?" "+c.collectTime:"")+"<br>":"")
-      +(c.deliverDate?"Livraison : "+fmtDate(c.deliverDate)+(c.deliverTime?" "+c.deliverTime:""):"")
-      +"</div>"
-      +"<div class='pbag'>Sac "+(i+1)+"/"+qrLabelCount+"</div>";
-    label.appendChild(info);
-    page.appendChild(label);
+    var t=buildTicket(c,i,qrLabelCount);
+    zone.appendChild(t);
+    tickets.push({el:t, idx:i, data:buildQrData(c,i,qrLabelCount)});
   }
 
-  zone.appendChild(page);
+  // Injecte tous les QR codes, puis imprime quand tout est prêt
+  tickets.forEach(function(t){
+    injectQr(t.el, t.idx, t.data, 160);
+  });
 
-  // Petit délai pour que le DOM soit rendu, puis impression
+  // Délai pour que qrcode.js ait fini de rendre les canvas
   setTimeout(function(){
     window.print();
-    // Nettoyage après impression
-    setTimeout(function(){zone.innerHTML="";},1000);
-  },200);
+    setTimeout(function(){zone.innerHTML="";},1500);
+  },400);
 });
 </script>
 </body>
