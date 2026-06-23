@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
   <meta name="theme-color" content="#1d3a5f"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <title>Laissez les Fers</title>
@@ -45,9 +45,11 @@
     .day-item{border-radius:9px;padding:6px 8px;font-size:11px;}
     .day-item.dc{background:#fff3e0;border:1px solid #ffcc80;}
     .day-item.dl{background:#e3f2fd;border:1px solid #90caf9;}
+    .day-item.dt{background:#e8f5e9;border:1.5px solid #66bb6a;}
     .day-item.dc.ok-traitement{background:#f0faf0;border:1.5px solid #66bb6a;}
     .day-item .di-time{font-weight:800;font-size:11px;}
     .day-item.dc .di-time{color:var(--or);}.day-item.dl .di-time{color:var(--bl);}
+    .day-item.dt .di-time{color:var(--gn);}
     .day-item.dc.ok-traitement .di-time{color:var(--gn);}
     .ok-badge{margin-left:4px;font-size:10px;color:var(--gn);font-weight:900;}
     .day-item .di-name{font-weight:700;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
@@ -76,30 +78,6 @@
     #cards{padding:14px 14px 0;display:flex;flex-direction:column;gap:12px;}
     .card{background:#fff;border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;border-left:5px solid transparent;animation:fs .25s ease both;}
     .card.sc{border-left-color:var(--or);}.card.sv{border-left-color:var(--vi);}.card.sl{border-left-color:var(--bl);}.card.st{border-left-color:var(--gn);opacity:.78;}
-    .card{height:286px;display:flex;flex-direction:column;}
-    .card-main{flex:1;min-height:0;display:flex;flex-direction:column;}
-    .card-head{min-height:58px;}
-    .cname{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
-    .cbags{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    .card-addr{min-height:36px;}
-    .addr-txt{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;}
-    .card-dates{min-height:66px;}
-    .dchip{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    .card-actions{margin-top:auto;}
-    .info-btn{border-color:#789!important;color:#456!important;background:#f8f9ff!important;}
-    .info-btn:active{background:var(--mist)!important;}
-    .info-overlay{position:fixed;inset:0;z-index:260;display:none;align-items:flex-end;justify-content:center;}
-    .info-overlay.open{display:flex;}
-    .info-bg{position:absolute;inset:0;background:rgba(10,10,30,.5);}
-    .info-card{position:relative;background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:520px;max-height:86dvh;overflow-y:auto;z-index:1;box-shadow:var(--sh);}
-    .info-head{background:linear-gradient(135deg,var(--navy),var(--navy2));padding:18px 20px;color:#fff;border-radius:20px 20px 0 0;display:flex;align-items:center;justify-content:space-between;gap:12px;}
-    .info-head-title{font-size:16px;font-weight:900;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-    .info-close{width:34px;height:34px;border:0;border-radius:10px;background:rgba(255,255,255,.16);color:#fff;font-size:18px;cursor:pointer;}
-    .info-body{padding:16px 18px calc(24px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;}
-    .info-row{background:#f8f9ff;border:1px solid #e8eaf6;border-radius:12px;padding:10px 12px;}
-    .info-lbl{font-size:10px;font-weight:900;color:#789;text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;}
-    .info-val{font-size:14px;font-weight:700;color:#234;word-break:break-word;}
-    .info-waze{display:inline-flex;margin-top:8px;align-items:center;gap:5px;background:var(--waze);color:#fff;font-size:12px;font-weight:900;padding:7px 10px;border-radius:8px;text-decoration:none;}
     @keyframes fs{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
     .card-head{display:flex;align-items:flex-start;justify-content:space-between;padding:12px 14px 6px;gap:8px;}
     .cname{font-size:16px;font-weight:800;color:var(--navy);}
@@ -202,113 +180,23 @@
     .hour-item .hi-del{width:30px;height:30px;border-radius:8px;border:none;background:#fef2f2;color:#c62828;font-size:12px;cursor:pointer;flex-shrink:0;margin-left:8px;}
     .hours-empty{text-align:center;color:#aaa;font-size:13px;padding:30px 0;}
     .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-    
-    /* RESPONSIVE GLOBAL */
-    html{width:100%;overflow-x:hidden;}
-    body{width:100%;overflow-x:hidden;}
-    img,svg,video,canvas{max-width:100%;height:auto;}
-    .topbar,.syncbar,.plan-section,.filters,.statsbar,#cards,#empty{width:100%;}
-    .topbar{gap:12px;}
-    .topbar-meta{flex-shrink:0;}
-    .logo-card{max-width:min(58vw,260px);}
-    .logo-card img{height:clamp(42px,10vw,62px);max-width:100%;}
-    .syncbar{min-height:28px;}
-    .sync-left{min-width:0;}
-    #slbl,#tc{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    #slbl{min-width:0;}
-    .plan-section,.statsbar,#cards{max-width:1180px;margin-left:auto;margin-right:auto;}
-    .plan-section::after{display:none;}
-    .week-grid{scroll-snap-type:x proximity;padding-inline:2px;}
-    .day-col{width:clamp(132px,42vw,170px);scroll-snap-align:start;}
-    .filters{top:var(--hdr-h);justify-content:flex-start;}
-    .ftab{min-height:38px;}
-    .statsbar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));}
-    #cards{display:grid;grid-template-columns:1fr;align-items:stretch;}
-    .card{min-width:0;}
-    .card-head>div{min-width:0;}
-    .cname,.cbags,.addr-txt,.dchip{overflow-wrap:anywhere;}
-    .card-head{align-items:flex-start;}
-    .card-addr{align-items:flex-start;}
-    .addr-txt{white-space:normal;line-height:1.35;}
-    .card-dates{display:grid;grid-template-columns:1fr;}
-    .dchip{line-height:1.35;}
-    .card-actions{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));}
-    .sbtn{font-size:10px;padding:10px 4px;}
-    .modal-wrap,.port-overlay{padding:0;}
-    .mcard,.port-card{width:100%;max-width:640px;}
-    .mbody{padding:clamp(14px,4vw,22px);}
-    .mfoot{padding-left:clamp(14px,4vw,22px);padding-right:clamp(14px,4vw,22px);}
-    .finp-row{grid-template-columns:1fr;}
-    .finp{min-width:0;}
-    .hours-body{max-width:860px;width:100%;margin:0 auto;}
-    .hours-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));}
-    .hour-item{gap:8px;}
-    .toast{max-width:calc(100vw - 28px);white-space:normal;text-align:center;}
 
-    @media(max-width:359px){
-      .topbar{padding-left:10px;padding-right:10px;}
-      .logo-card{padding:8px 10px;max-width:54vw;}
-      .topbar-meta{font-size:10px;}
-      .tclock{font-size:15px;}
-      .syncbar{font-size:10px;padding-left:10px;padding-right:10px;}
-      .plan-section,.statsbar,#cards{padding-left:10px;padding-right:10px;}
-      .plan-header{align-items:flex-start;}
-      .plan-nav{width:100%;display:grid;grid-template-columns:34px 1fr 34px;gap:6px;}
-      .pnav-label{min-width:0;}
-      .pnav-today{grid-column:1 / -1;min-height:32px;}
-      .filters{padding-left:10px;padding-right:10px;}
-      .ftab{font-size:11px;padding:6px 10px;}
-      .statsbar{gap:6px;}
-      .spill{padding:8px 5px;}
-      .snum{font-size:22px;}
-      .slbl{font-size:9px;}
-      .card-head{flex-direction:column;}
-      .sbadge{align-self:flex-start;}
-      .waze-btn{padding:6px 8px;font-size:10px;}
-      .fab{right:14px;bottom:calc(18px + env(safe-area-inset-bottom));}
-      .clock-tab{left:12px;bottom:calc(18px + env(safe-area-inset-bottom));}
-    }
-
-    @media(min-width:480px){
-      .plan-section,.statsbar,#cards{padding-left:18px;padding-right:18px;}
-      .filters{justify-content:center;}
-      .card-dates{grid-template-columns:repeat(2,minmax(0,1fr));}
-      .card-actions{grid-template-columns:repeat(5,minmax(0,1fr));}
-      .finp-row{grid-template-columns:1fr 1fr;}
-      .mcard,.port-card,.info-card{border-radius:20px;max-height:min(92dvh,820px);}
-      .mhead,.port-head{border-radius:20px 20px 0 0;}
-      .modal-wrap,.port-overlay{align-items:center;padding:18px;}
-      .lock-card{max-width:360px;}
-    }
-
-    @media(min-width:700px){
-      #cards{grid-template-columns:repeat(2,minmax(0,1fr));}
-      .statsbar{max-width:760px;}
-      .plan-section{max-width:1180px;}
-      .day-col{width:170px;}
-      .filters{flex-wrap:wrap;overflow-x:visible;}
-    }
-
-    @media(min-width:1024px){
-      body{padding-bottom:36px;}
-      .topbar,.syncbar{padding-left:32px;padding-right:32px;}
-      #cards{grid-template-columns:repeat(3,minmax(0,1fr));padding-top:18px;}
-      .week-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));overflow-x:visible;}
-      .day-col{width:auto;}
-      .fab{right:32px;bottom:32px;}
-      .clock-tab{left:32px;bottom:32px;}
-    }
-
-    @media(min-width:1360px){
-      #cards{grid-template-columns:repeat(4,minmax(0,1fr));max-width:1440px;}
-      .plan-section{max-width:1440px;}
-    }
-
-    @media(hover:hover) and (pointer:fine){
-      .sbtn:hover,.ftab:hover,.pnav-btn:hover,.pnav-today:hover,.ibtn:hover,.btn-save:hover,.btn-cancel:hover,.btn-delete:hover{filter:brightness(.97);}
-      .card:hover{transform:translateY(-1px);}
-    }
-
+    /* ── MENU ANCRE WAZE ── */
+    .anchor-btn{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom) + 58px + 12px);right:20px;width:58px;height:58px;border-radius:18px;background:linear-gradient(135deg,#33ccff,#0099cc);color:#fff;font-size:22px;border:none;box-shadow:0 4px 14px rgba(0,153,204,.4);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:100;transition:transform .15s;filter:drop-shadow(0 0 0 #fff);}
+    .anchor-btn:active{transform:scale(.92);}
+    .waze-menu-overlay{position:fixed;inset:0;z-index:180;display:none;}
+    .waze-menu-overlay.open{display:block;}
+    .waze-menu{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom) + 58px + 12px + 44px + 8px);right:16px;background:#fff;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.18);width:min(310px,calc(100vw - 32px));max-height:70dvh;overflow-y:auto;z-index:190;animation:su .2s ease;}
+    .waze-menu-head{background:linear-gradient(135deg,#33ccff,#0099cc);padding:14px 16px;border-radius:16px 16px 0 0;display:flex;align-items:center;justify-content:space-between;}
+    .waze-menu-head h3{color:#fff;font-size:14px;font-weight:800;margin:0;}
+    .waze-menu-close{width:28px;height:28px;border-radius:8px;border:none;background:rgba(255,255,255,.22);color:#fff;font-size:13px;cursor:pointer;}
+    .waze-menu-city{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:#999;padding:10px 14px 4px;}
+    .waze-menu-city:first-of-type{padding-top:12px;}
+    .waze-port-link{display:flex;align-items:center;gap:10px;padding:10px 14px;text-decoration:none;color:var(--navy);font-size:13px;font-weight:700;border-bottom:1px solid #f0f0f0;transition:background .12s;}
+    .waze-port-link:last-child{border-bottom:none;}
+    .waze-port-link:active{background:#f0faff;}
+    .waze-port-icon{width:30px;height:30px;border-radius:8px;background:var(--waze);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+    @media(min-width:480px){#cards,.statsbar,.plan-section{max-width:480px;margin-left:auto;margin-right:auto;}.filters{justify-content:center;}}
   </style>
 </head>
 <body>
@@ -320,6 +208,9 @@
 <div class="syncbar">
   <div class="sync-left"><div class="dot" id="dot"></div><span id="slbl">Connexion&#8230;</span></div>
   <span id="tc"></span>
+</div>
+<div style="background:#ff8f00;color:#fff;text-align:center;font-size:11px;font-weight:800;padding:5px 16px;letter-spacing:.5px;">
+  ⚠️ MODE DÉVELOPPEMENT — données locales uniquement, production non impactée
 </div>
 <div class="plan-section">
   <div class="plan-header">
@@ -349,6 +240,17 @@
 <div id="empty" style="display:none"><div class="eico">&#128085;</div><p>Aucun client.<br>Appuie sur <strong>+</strong> pour d&#233;marrer.</p></div>
 <button class="fab" id="fab">&#43;</button>
 <button class="clock-tab" id="clock-tab" title=" ">&#128336;</button>
+<button class="anchor-btn" id="anchor-btn" title="Navigation Waze vers les ports">&#9875;</button>
+
+<!-- MENU WAZE PORTS -->
+<div class="waze-menu-overlay" id="waze-menu-overlay"></div>
+<div class="waze-menu" id="waze-menu" style="display:none">
+  <div class="waze-menu-head">
+    <h3>&#9875; Navigation Waze</h3>
+    <button class="waze-menu-close" id="waze-menu-close">&#10005;</button>
+  </div>
+  <div id="waze-menu-body"></div>
+</div>
 <div class="toast" id="toast"></div>
 
 <img id="backup-pixel" style="display:none" width="1" height="1" alt=""/>
@@ -484,12 +386,13 @@
 </div>
 
 <script>
-// Stockage local navigateur : synchro Cloudflare supprimée
-var CLIENTS_KEY = "pressingrun_clients";
-
-// URL du Google Apps Script de sauvegarde (vide = backup désactivé)
-// Colle ici l'URL obtenue après déploiement (voir backup_apps_script.gs)
-var BACKUP_URL = "https://script.google.com/macros/s/AKfycby-L7mtX-7alxeXt-yTfZCaQtTiU8ktcmEVAhiO8qaluttv63brs0y799ye5oh2LPIH/exec";
+// ╔══════════════════════════════════════════════════════════╗
+// ║  MODE DÉVELOPPEMENT LOCAL — Cloudflare désactivé         ║
+// ║  Les données sont stockées dans localStorage             ║
+// ║  Aucun impact sur la production                          ║
+// ╚══════════════════════════════════════════════════════════╝
+var API = null;        // désactivé en mode dev
+var BACKUP_URL = "";   // backup Google Sheets désactivé en mode dev
 
 // ═══════════════════════════════════════════════════════════
 var clients = [];
@@ -524,7 +427,8 @@ var PORTS_BY_CITY = [
   ]},
   { city:"Monaco", ports:[
     "Port Hercule, Monaco",
-    "Port de Fontvieille, Monaco"
+    "Port de Fontvieille, Monaco",
+    "Yacht Club de Monaco, Monaco"
   ]},
   { city:"Cap d'Ail", ports:[
     "Port de Cap d'Ail, Cap d'Ail, France"
@@ -627,35 +531,31 @@ function setSyncStatus(state,msg){
   document.getElementById("slbl").textContent=msg;
 }
 
-function loadClientsLocal(){
-  try{
-    var raw=localStorage.getItem(CLIENTS_KEY);
-    var data=raw?JSON.parse(raw):[];
-    return Array.isArray(data)?data:[];
-  }catch(e){return [];}
-}
-
-function saveClientsLocal(){
-  try{
-    localStorage.setItem(CLIENTS_KEY,JSON.stringify(clients));
-    setSyncStatus("ok","Sauvegardé localement · "+new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}));
-  }catch(e){
-    setSyncStatus("err","Erreur de sauvegarde locale");
-  }
-}
-
 function fetchClients(){
-  clients=loadClientsLocal();
-  setSyncStatus("ok","Mode local");
+  // MODE DEV : lecture depuis localStorage
+  try{
+    var stored=localStorage.getItem("llf_dev_clients");
+    clients=stored?JSON.parse(stored):[];
+  }catch(e){ clients=[]; }
+  setSyncStatus("ok","💻 Mode dev local · "+new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}));
   render();
 }
 
 function pushClients(){
-  saveClientsLocal();
-  backupToSheet();
+  if(pending) return;
+  pending=true;
+  // MODE DEV : sauvegarde dans localStorage uniquement
+  try{
+    localStorage.setItem("llf_dev_clients",JSON.stringify(clients));
+    setSyncStatus("ok","💻 Mode dev local · "+new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}));
+  }catch(e){
+    setSyncStatus("err","Erreur localStorage");
+  }
+  pending=false;
+  // backupToSheet() désactivé en mode dev
 }
 
-// Sauvegarde silencieuse vers Google Sheets (optionnelle)
+// Sauvegarde silencieuse vers Google Sheets (de secours, en plus de Cloudflare)
 var lastKnownBackupTime=null;
 
 function backupToSheet(){
@@ -785,9 +685,11 @@ function renderPlanning(){
         var isOkCollecte = type==="collecte" && c.status==="traitement";
         var isOkLivraison = type==="livraison" && c.status==="termine";
         var isOk = isOkCollecte || isOkLivraison;
+        var isTermine = c.status==="termine";
         var okClass=isOk?" ok-traitement":"";
         var okBadge=isOk?"<span class='ok-badge'>✓ OK</span>":"";
-        html+="<div class='day-item "+(type==="collecte"?"dc":"dl")+okClass+"'>"
+        var itemClass = isTermine ? "dt" : (type==="collecte" ? "dc" : "dl");
+        html+="<div class='day-item "+itemClass+okClass+"'>"
           +"<div class='di-row'><span class='di-time'>"+icon+" "+(it.time||"--:--")+okBadge+"</span>"
           +(waze?"<a class='di-waze' href='"+esc(waze)+"' target='_blank'>&#8599;</a>":"")
           +"</div><div class='di-name'>"+esc(c.name)+"</div></div>";
@@ -833,64 +735,21 @@ function buildCard(c){
 
   var bagsLine=(c.bags&&c.bags>0)?"<div class='cbags'>&#128717; "+c.bags+" sac"+(c.bags>1?"s":"")+"</div>":"";
   var acBc=c.status==="collecte"?" abc":"";var acBv=c.status==="traitement"?" abv":"";var acBl=c.status==="livraison"?" abl":"";var acBt=c.status==="termine"?" abt":"";
-  var mainAddr=collectAddr||deliverAddr||"Adresse non renseignée";
-  var mainWaze=wazeHref(mainAddr);
-  var mainAddrRow="<div class='card-addr'><div class='addr-txt'>&#128205; "+esc(mainAddr)+"</div>"+(mainWaze?"<a class='waze-btn' href='"+esc(mainWaze)+"' target='_blank'>&#8599; Waze</a>":"")+"</div>";
-
-  div.innerHTML="<div class='card-main'><div class='card-head'><div><div class='cname'>"+esc(c.name)+"</div>"+bagsLine+"</div><span class='sbadge "+bcls+"'>"+slbl+"</span></div>"
-    +mainAddrRow
+  div.innerHTML="<div class='card-head'><div><div class='cname'>"+esc(c.name)+"</div>"+bagsLine+"</div><span class='sbadge "+bcls+"'>"+slbl+"</span></div>"
+    +addrRow
     +"<div class='card-dates'><div class='dchip"+(coOv?" ov":"")+"'>&#128197; Collecte : "+fmtDateTime(c.collectDate,c.collectTime)+"</div>"
-    +"<div class='dchip"+(deOv?" ov":"")+"'>&#10003; Livraison : "+fmtDateTime(c.deliverDate,c.deliverTime)+"</div></div></div>"
-    +"<div class='card-actions'><button class='sbtn info-btn' data-a='info'>&#9432; Infos</button>"
-    +"<button class='sbtn bc2"+acBc+"' data-a='status' data-v='collecte'>&#128230; Collecte</button>"
+    +"<div class='dchip"+(deOv?" ov":"")+"'>&#10003; Livraison : "+fmtDateTime(c.deliverDate,c.deliverTime)+"</div></div>"
+    +"<div class='card-actions'><button class='sbtn bc2"+acBc+"' data-a='status' data-v='collecte'>&#128230; Collecte</button>"
     +"<button class='sbtn bv2"+acBv+"' data-a='status' data-v='traitement'>&#129529; Traitement</button>"
     +"<button class='sbtn bl2"+acBl+"' data-a='status' data-v='livraison'>&#128666; Livraison</button>"
     +"<button class='sbtn bt2"+acBt+"' data-a='status' data-v='termine'>&#10003; Terminé</button></div>";
   return div;
 }
 
-function infoRow(label,value,extra){
-  if(value===undefined||value===null||value==="")value="—";
-  return "<div class='info-row'><div class='info-lbl'>"+esc(label)+"</div><div class='info-val'>"+esc(value)+"</div>"+(extra||"")+"</div>";
-}
-function infoWaze(addr){
-  var url=wazeHref(addr||"");
-  return url?"<a class='info-waze' href='"+esc(url)+"' target='_blank'>&#8599; Ouvrir dans Waze</a>":"";
-}
-function showInfo(c){
-  var existing=document.getElementById("info-overlay");
-  if(existing)existing.remove();
-  var collectAddr=c.collectAddress||c.address||"";
-  var deliverAddr=c.deliverAddress||c.address||"";
-  var labelMap={collecte:"Collecte",traitement:"Traitement",livraison:"Livraison",termine:"Terminé"};
-  var wrap=document.createElement("div");
-  wrap.id="info-overlay";
-  wrap.className="info-overlay open";
-  wrap.innerHTML="<div class='info-bg' data-close='1'></div><div class='info-card'>"
-    +"<div class='info-head'><div class='info-head-title'>"+esc(c.name||"Infos client")+"</div><button class='info-close' data-close='1'>&times;</button></div>"
-    +"<div class='info-body'>"
-    +infoRow("Statut",labelMap[c.status]||c.status||"—")
-    +infoRow("Sacs",c.bags?String(c.bags):"—")
-    +infoRow("Collecte",fmtDateTime(c.collectDate,c.collectTime))
-    +infoRow("Livraison",fmtDateTime(c.deliverDate,c.deliverTime))
-    +infoRow("Adresse collecte",collectAddr,infoWaze(collectAddr))
-    +infoRow("Adresse livraison",deliverAddr,infoWaze(deliverAddr))
-    +infoRow("Téléphone",c.phone||c.tel||"—")
-    +infoRow("Notes",c.notes||c.note||"—")
-    +"<button class='btn-save' data-edit='1'>Modifier cette fiche</button>"
-    +"</div></div>";
-  document.body.appendChild(wrap);
-  wrap.addEventListener("click",function(e){
-    if(e.target.dataset.close){wrap.remove();}
-    if(e.target.dataset.edit){wrap.remove();openModal(c);}
-  });
-}
-
 document.getElementById("cards").addEventListener("click",function(e){
   var btn=e.target.closest("[data-a]");if(!btn)return;
   var id=btn.closest(".card").dataset.id;
   var c=clients.find(function(x){return x.id===id;});if(!c)return;
-  if(btn.dataset.a==="info"){showInfo(c);return;}
   if(btn.dataset.a==="status"){c.status=btn.dataset.v;render();pushClients();toast("Statut → "+btn.dataset.v);}
 });
 
@@ -1030,18 +889,45 @@ function saveHoursLocal(){
   try{localStorage.setItem(HOURS_KEY,JSON.stringify(workHours));}catch(e){}
 }
 
-// Charge les heures depuis le stockage local
+// Charge depuis le Worker (source de vérité partagée), avec fallback local si hors-ligne
 function loadHours(cb){
-  workHours=loadHoursLocal();
-  hoursLoaded=true;
-  document.getElementById("hours-sync-lbl").textContent="Mode local";
-  if(cb)cb();
+  document.getElementById("hours-sync-lbl").textContent="Chargement\u2026";
+  fetch(API+"/hours")
+    .then(function(r){if(!r.ok)throw new Error(r.status);return r.json();})
+    .then(function(data){
+      workHours=Array.isArray(data)?data:[];
+      saveHoursLocal();
+      hoursLoaded=true;
+      document.getElementById("hours-sync-lbl").textContent="Synchronis\u00e9";
+      if(cb)cb();
+    })
+    .catch(function(){
+      workHours=loadHoursLocal();
+      document.getElementById("hours-sync-lbl").textContent="Hors ligne \u2014 donn\u00e9es locales";
+      if(cb)cb();
+    });
 }
 
-// Sauvegarde les heures dans le stockage local
+// Sauvegarde vers le Worker (partagé entre tous les appareils) + cache local
 function saveHours(){
   saveHoursLocal();
-  document.getElementById("hours-sync-lbl").textContent="Sauvegardé localement";
+  if(hoursPending)return;
+  hoursPending=true;
+  document.getElementById("hours-sync-lbl").textContent="Sauvegarde\u2026";
+  fetch(API+"/hours",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(workHours)
+  })
+  .then(function(r){if(!r.ok)throw new Error(r.status);return r.json();})
+  .then(function(){
+    hoursPending=false;
+    document.getElementById("hours-sync-lbl").textContent="Synchronis\u00e9";
+  })
+  .catch(function(){
+    hoursPending=false;
+    document.getElementById("hours-sync-lbl").textContent="Erreur de sync \u2014 sauvegard\u00e9 localement";
+  });
 }
 
 function openHoursScreen(){
@@ -1194,7 +1080,51 @@ document.getElementById("hours-list").addEventListener("click",function(e){
   }
 });
 
+// ── MENU WAZE PORTS ──────────────────────────────────────────
+(function(){
+  var menuEl    = document.getElementById("waze-menu");
+  var overlay   = document.getElementById("waze-menu-overlay");
+  var bodyEl    = document.getElementById("waze-menu-body");
+  var anchorBtn = document.getElementById("anchor-btn");
+
+  // Construit le menu à partir de PORTS_BY_CITY
+  var html = "";
+  PORTS_BY_CITY.forEach(function(grp){
+    html += "<div class='waze-menu-city'>" + esc(grp.city) + "</div>";
+    grp.ports.forEach(function(p){
+      var href  = "https://waze.com/ul?q=" + encodeURIComponent(p) + "&navigate=yes";
+      var label = p.split(",")[0]; // Nom du port sans la ville
+      html += "<a class='waze-port-link' href='" + href + "' target='_blank' rel='noopener'>"
+            + "<span class='waze-port-icon'>&#128663;</span>"
+            + esc(label)
+            + "</a>";
+    });
+  });
+  bodyEl.innerHTML = html;
+
+  function openMenu(){
+    menuEl.style.display = "block";
+    overlay.classList.add("open");
+  }
+  function closeMenu(){
+    menuEl.style.display = "none";
+    overlay.classList.remove("open");
+  }
+
+  anchorBtn.addEventListener("click", function(e){
+    e.stopPropagation();
+    if(menuEl.style.display === "none") openMenu(); else closeMenu();
+  });
+  overlay.addEventListener("click", closeMenu);
+  document.getElementById("waze-menu-close").addEventListener("click", closeMenu);
+  bodyEl.addEventListener("click", function(e){
+    if(e.target.closest(".waze-port-link")) setTimeout(closeMenu, 300);
+  });
+})();
+
 fetchClients();
+// setInterval désactivé en mode dev (pas de polling Cloudflare)
+// setInterval(function(){if(!pending)fetchClients();},3600000);
 </script>
 </body>
 </html>
