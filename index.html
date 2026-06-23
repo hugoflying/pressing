@@ -307,6 +307,36 @@
     .label-counter button:active{background:var(--mist);}
     .label-counter span{font-size:14px;font-weight:800;min-width:28px;text-align:center;}
 
+    /* ── BOUTON SCANNER ── */
+    .scan-btn{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom));left:60px;width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,#2e7d32,#388e3c);color:#fff;font-size:20px;border:none;box-shadow:0 4px 14px rgba(46,125,50,.4);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:100;transition:transform .15s;}
+    .scan-btn:active{transform:scale(.92);}
+
+    /* ── MODAL SCANNER ── */
+    .scan-modal{position:fixed;inset:0;z-index:450;display:none;flex-direction:column;background:#000;}
+    .scan-modal.open{display:flex;}
+    .scan-head{background:linear-gradient(135deg,var(--navy),var(--navy2));padding:calc(14px + env(safe-area-inset-top)) 16px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+    .scan-head h2{color:#fff;font-size:16px;font-weight:800;}
+    .scan-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:20px;}
+    .scan-viewport{position:relative;width:100%;max-width:360px;aspect-ratio:1;border-radius:16px;overflow:hidden;background:#111;}
+    /* html5-qrcode injecte un div+video — on le force à remplir le viewport */
+    #qr-reader{width:100%;height:100%;position:absolute;inset:0;}
+    #qr-reader video{width:100%!important;height:100%!important;object-fit:cover!important;border-radius:0!important;}
+    #qr-reader img{display:none!important;}
+    #qr-reader__dashboard{display:none!important;}
+    #qr-reader__status_span{display:none!important;}
+    .scan-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:2;}
+    .scan-frame{width:65%;aspect-ratio:1;border:3px solid rgba(255,255,255,.9);border-radius:16px;box-shadow:0 0 0 9999px rgba(0,0,0,.45);position:relative;}
+    .scan-frame::before,.scan-frame::after{content:"";position:absolute;width:22px;height:22px;border-color:#69f0ae;border-style:solid;}
+    .scan-frame::before{top:-3px;left:-3px;border-width:4px 0 0 4px;border-radius:4px 0 0 4px;}
+    .scan-frame::after{bottom:-3px;right:-3px;border-width:0 4px 4px 0;border-radius:0 0 4px 4px;}
+    .scan-status{color:#fff;font-size:13px;font-weight:700;text-align:center;padding:0 20px;line-height:1.6;}
+    .scan-status.found{color:#69f0ae;}
+    .scan-status.error{color:#ff5252;}
+    .scan-result-card{background:#f0fdf4;border-radius:12px;padding:16px;border-left:4px solid var(--gn);}
+    .scan-result-name{font-size:18px;font-weight:800;color:var(--navy);margin-bottom:6px;}
+    .scan-result-detail{font-size:13px;color:#567;line-height:1.8;}
+    .scan-result-bag{font-size:22px;font-weight:900;color:var(--or);margin-top:8px;}
+
     /* ── IMPRESSION ── */
     @media print{
       body > *{display:none !important;}
@@ -344,6 +374,7 @@
       .fab{bottom:28px;right:28px;}
       .anchor-btn{bottom:calc(28px + 58px + 14px);right:28px;}
       .clock-tab{bottom:28px;left:28px;}
+      .scan-btn{bottom:28px;left:72px;}
       .modal-wrap,.client-modal-wrap{align-items:center;}
       .mcard,.client-modal-card{border-radius:20px;max-width:560px;max-height:90dvh;}
       .mhead,.client-modal-head{border-radius:20px 20px 0 0;}
@@ -425,7 +456,36 @@
 
 <button class="fab" id="fab">+</button>
 <button class="clock-tab" id="clock-tab" title="Heures de travail">🕐</button>
+<button class="scan-btn" id="scan-btn" title="Scanner un QR code">📷</button>
 <button class="anchor-btn" id="anchor-btn" title="Navigation Waze vers les ports">⚓</button>
+
+<!-- Modal scanner QR -->
+<div class="scan-modal" id="scan-modal">
+  <div class="scan-head">
+    <h2>📷 Scanner un sac</h2>
+    <button class="close-btn" id="scan-close">✕</button>
+  </div>
+  <div class="scan-body">
+    <div class="scan-viewport">
+      <!-- html5-qrcode injecte sa vidéo ici -->
+      <div id="qr-reader"></div>
+      <div class="scan-overlay"><div class="scan-frame"></div></div>
+    </div>
+    <div class="scan-status" id="scan-status">Pointez la caméra vers le QR code du sac</div>
+  </div>
+</div>
+
+<!-- Modal résultat scan -->
+<div class="client-modal-wrap" id="scan-result-modal">
+  <div class="client-modal-bg" id="scan-result-bg"></div>
+  <div class="client-modal-card" style="max-width:420px">
+    <div class="client-modal-head" style="background:linear-gradient(135deg,#2e7d32,#388e3c)">
+      <h2>✅ Sac identifié</h2>
+      <button class="close-btn" id="scan-result-close">✕</button>
+    </div>
+    <div class="client-modal-body" id="scan-result-body"></div>
+  </div>
+</div>
 
 <!-- Menu Waze ports -->
 <div class="waze-menu-overlay" id="waze-menu-overlay"></div>
@@ -1441,8 +1501,203 @@ document.getElementById("hours-list").addEventListener("click",function(e){
 fetchClients();
 </script>
 
-<!-- Lib QR Code (qrcode.js, vanilla, ~10ko) -->
+<!-- jsQR : fallback si BarcodeDetector pas dispo (Safari, Firefox) -->
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+
+<!-- Lib QR Code (génération étiquettes) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// SCANNER QR CODE — html5-qrcode (iOS Safari + Chrome + Android)
+// ══════════════════════════════════════════════════════════
+var scannerInstance = null;
+var scannerRunning  = false;
+
+function openScanner(){
+  document.getElementById("scan-modal").classList.add("open");
+  var status = document.getElementById("scan-status");
+  status.className = "scan-status";
+  status.textContent = "Démarrage de la caméra…";
+
+  // html5-qrcode est chargé en lazy pour ne pas bloquer la page
+  if(typeof Html5Qrcode === "undefined"){
+    var s = document.createElement("script");
+    s.src = "https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js";
+    s.onload = startHtml5Scanner;
+    s.onerror = function(){
+      status.className="scan-status error";
+      status.textContent="❌ Impossible de charger le scanner. Vérifie ta connexion.";
+    };
+    document.head.appendChild(s);
+  } else {
+    startHtml5Scanner();
+  }
+}
+
+function startHtml5Scanner(){
+  var status = document.getElementById("scan-status");
+
+  // Nettoie le contenu précédent du reader
+  var readerEl = document.getElementById("qr-reader");
+  readerEl.innerHTML = "";
+
+  scannerInstance = new Html5Qrcode("qr-reader", {verbose: false});
+
+  var config = {
+    fps: 15,
+    qrbox: function(w, h){ var side = Math.min(w, h) * 0.65; return {width:side, height:side}; },
+    aspectRatio: 1.0,
+    // Sur iOS Safari, on doit passer par facingMode
+    videoConstraints: {
+      facingMode: { ideal: "environment" }
+    }
+  };
+
+  scannerInstance.start(
+    { facingMode: { ideal: "environment" } },
+    config,
+    // Succès
+    function(decodedText){
+      if(scannerRunning){ // évite les doublons
+        scannerRunning = false;
+        if(navigator.vibrate) navigator.vibrate([60,30,60]);
+        status.className = "scan-status found";
+        status.textContent = "✅ Sac trouvé !";
+        stopScanner(function(){ handleQrResult(decodedText); });
+      }
+    },
+    // Erreur de scan frame (normal, on ignore)
+    null
+  ).then(function(){
+    scannerRunning = true;
+    status.textContent = "Pointez la caméra vers le QR code du sac";
+    // Masque les éléments parasites injectés par html5-qrcode
+    var extras = readerEl.querySelectorAll("img, select, #qr-reader__dashboard");
+    extras.forEach(function(el){ el.style.display="none"; });
+  }).catch(function(err){
+    status.className = "scan-status error";
+    if(/Permission|NotAllowed/i.test(err)){
+      status.textContent = "❌ Accès caméra refusé.\nAutorise la caméra dans Réglages > Safari (ou Chrome).";
+    } else {
+      status.textContent = "❌ Caméra indisponible : " + err;
+    }
+  });
+}
+
+function stopScanner(cb){
+  if(scannerInstance && scannerRunning){
+    scannerInstance.stop().then(function(){
+      scannerRunning = false;
+      scannerInstance.clear();
+      if(cb) cb();
+    }).catch(function(){
+      if(cb) cb();
+    });
+  } else {
+    if(cb) cb();
+  }
+}
+
+function closeScanner(){
+  stopScanner(function(){
+    document.getElementById("scan-modal").classList.remove("open");
+    document.getElementById("qr-reader").innerHTML = "";
+  });
+}
+
+function handleQrResult(raw){
+  // Parse : "LLF:id\nNom\nSac X/N\n..."
+  var lines = raw.split("\n");
+  var idLine = lines.find(function(l){ return l.startsWith("LLF:"); });
+  var id = idLine ? idLine.replace("LLF:","").trim() : null;
+  var c = id ? clients.find(function(x){ return x.id===id; }) : null;
+
+  // Fallback par nom
+  if(!c){
+    var nameLine = lines[1] || "";
+    c = clients.find(function(x){ return x.name === nameLine.trim(); });
+  }
+
+  if(c){
+    showScanResult(c, raw);
+  } else {
+    // Ré-ouvre le scanner avec message d'erreur
+    document.getElementById("scan-modal").classList.add("open");
+    var status = document.getElementById("scan-status");
+    status.className = "scan-status error";
+    status.textContent = "❓ QR non reconnu. Commande introuvable.";
+    setTimeout(function(){
+      startHtml5Scanner();
+    }, 2000);
+  }
+}
+
+function showScanResult(c, raw){
+  var lines = raw ? raw.split("\n") : [];
+  var bagLine = lines.find(function(l){ return /^Sac \d+\/\d+$/.test(l.trim()); }) || "";
+  var pay = c.payment || "unpaid";
+  var collectAddr = c.collectAddress || c.address || "";
+  var deliverAddr = c.deliverAddress || c.address || "";
+
+  var body = document.getElementById("scan-result-body");
+  body.innerHTML =
+    "<div class='scan-result-card'>"
+    + "<div class='scan-result-name'>" + esc(c.name) + "</div>"
+    + (bagLine ? "<div class='scan-result-bag'>🎒 " + esc(bagLine) + "</div>" : "")
+    + "<div class='scan-result-detail'>"
+    + (collectAddr ? "📍 " + esc(collectAddr.split(",")[0]) + "<br>" : "")
+    + (c.collectDate ? "📅 Collecte : " + fmtDateTime(c.collectDate, c.collectTime) + "<br>" : "")
+    + (c.deliverDate ? "✓ Livraison : " + fmtDateTime(c.deliverDate, c.deliverTime) : "")
+    + "</div></div>"
+    + "<div style='display:flex;align-items:center;gap:8px;flex-wrap:wrap'>"
+    + "<span class='sbadge " + (BADGE_MAP[c.status]||"bc") + "'>" + LABEL_MAP[c.status] + "</span>"
+    + "<span class='pay-badge " + PAY_CLASSES[pay] + "'>" + PAY_LABELS[pay] + "</span>"
+    + "</div>"
+    + (c.clientNote ? "<div style='background:#fffbeb;border-radius:10px;padding:10px 12px;font-size:12px;color:#456;font-style:italic'>📝 " + esc(c.clientNote) + "</div>" : "")
+    + "<div style='display:flex;flex-direction:column;gap:8px'>"
+    + "<div style='font-size:11px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.5px'>Action rapide</div>"
+    + "<div style='display:flex;gap:6px;flex-wrap:wrap'>"
+    + "<button class='sbtn bc2" + (c.status==="collecte"?" abc":"") + "' data-scan-action='status' data-v='collecte' data-id='" + c.id + "'>📦</button>"
+    + "<button class='sbtn bv2" + (c.status==="traitement"?" abv":"") + "' data-scan-action='status' data-v='traitement' data-id='" + c.id + "'>🧺</button>"
+    + "<button class='sbtn bl2" + (c.status==="livraison"?" abl":"") + "' data-scan-action='status' data-v='livraison' data-id='" + c.id + "'>🚚</button>"
+    + "<button class='sbtn bt2" + (c.status==="termine"?" abt":"") + "' data-scan-action='status' data-v='termine' data-id='" + c.id + "'>✓ OK</button>"
+    + "</div>"
+    + (c.status==="livraison"
+        ? "<button class='deliver-now-btn' data-scan-action='sign' data-id='" + c.id + "'>✍️ Signer la livraison</button>"
+        : "")
+    + "<button class='btn-cancel' data-scan-action='rescan'>📷 Scanner un autre sac</button>"
+    + "</div>";
+
+  document.getElementById("scan-result-modal").classList.add("open");
+}
+
+document.getElementById("scan-result-body").addEventListener("click", function(e){
+  var btn = e.target.closest("[data-scan-action]"); if(!btn) return;
+  var action = btn.dataset.scanAction;
+  var id = btn.dataset.id;
+  var c = id ? clients.find(function(x){ return x.id===id; }) : null;
+
+  if(action === "status" && c){
+    c.status = btn.dataset.v;
+    pushClients();
+    showScanResult(c, "LLF:"+c.id+"\n"+c.name);
+    render();
+    toast("Statut → " + LABEL_MAP[btn.dataset.v]);
+  } else if(action === "sign" && c){
+    document.getElementById("scan-result-modal").classList.remove("open");
+    openSigModal(id);
+  } else if(action === "rescan"){
+    document.getElementById("scan-result-modal").classList.remove("open");
+    openScanner();
+  }
+});
+
+document.getElementById("scan-btn").addEventListener("click", openScanner);
+document.getElementById("scan-close").addEventListener("click", closeScanner);
+document.getElementById("scan-result-bg").addEventListener("click", function(){ document.getElementById("scan-result-modal").classList.remove("open"); });
+document.getElementById("scan-result-close").addEventListener("click", function(){ document.getElementById("scan-result-modal").classList.remove("open"); });
+</script>
 <script>
 // ── QR CODE & ÉTIQUETTES ──────────────────────────────────
 var qrClient=null;
