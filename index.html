@@ -81,45 +81,215 @@
     .port-group-header{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:#999;padding:6px 0 4px;display:flex;align-items:center;gap:6px;}
     .port-group-header::after{content:"";flex:1;height:1px;background:#e0e0e0;}
 
-    /* ── CARDS ── */
-    #cards{padding:14px 14px 0;display:flex;flex-direction:column;gap:12px;}
-    .card{background:#fff;border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;border-left:5px solid transparent;animation:fs .25s ease both;}
-    .card.sc{border-left-color:var(--or);}.card.sv{border-left-color:var(--vi);}.card.sl{border-left-color:var(--bl);}.card.st{border-left-color:var(--gn);opacity:.78;}
-    @keyframes fs{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-    .card-head{display:flex;align-items:flex-start;justify-content:space-between;padding:12px 14px 6px;gap:8px;}
-    .cname{font-size:16px;font-weight:800;color:var(--navy);}
-    .cbags{font-size:12px;color:#789;margin-top:2px;}
+
+    /* ══════════════════════════════════════════════════════
+       CARTES — redesign complet
+    ══════════════════════════════════════════════════════ */
+    #cards{padding:14px 14px 0;display:flex;flex-direction:column;gap:10px;}
+
+    /* Conteneur principal */
+    .card{
+      background:#fff;
+      border-radius:18px;
+      box-shadow:0 1px 4px rgba(0,0,0,.07), 0 4px 16px rgba(0,0,0,.06);
+      overflow:hidden;
+      animation:fs .22s ease both;
+      position:relative;
+    }
+    @keyframes fs{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+    /* Bandeau statut en haut — pleine largeur, fin */
+    .card-ribbon{
+      height:4px;
+      width:100%;
+    }
+    .card.sc .card-ribbon{background:linear-gradient(90deg,var(--or),#ffb300);}
+    .card.sv .card-ribbon{background:linear-gradient(90deg,var(--vi),#ab47bc);}
+    .card.sl .card-ribbon{background:linear-gradient(90deg,var(--bl),#1e88e5);}
+    .card.st .card-ribbon{background:linear-gradient(90deg,var(--gn),#43a047);}
+    .card.st{opacity:.75;}
+
+    /* Corps principal */
+    .card-body{padding:14px 16px 0;}
+
+    /* Ligne 1 : nom + badge statut */
+    .card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:2px;}
+    .card-name{font-size:17px;font-weight:800;color:#111;letter-spacing:-.2px;line-height:1.2;flex:1;min-width:0;}
+    .card-status-pill{
+      flex-shrink:0;
+      font-size:10px;font-weight:800;
+      padding:4px 10px;border-radius:20px;
+      text-transform:uppercase;letter-spacing:.5px;
+      white-space:nowrap;
+    }
+    .card.sc .card-status-pill{background:#fff3e0;color:#e65100;}
+    .card.sv .card-status-pill{background:#f3e5f5;color:#6a1b9a;}
+    .card.sl .card-status-pill{background:#e3f2fd;color:#0d47a1;}
+    .card.st .card-status-pill{background:#e8f5e9;color:#1b5e20;}
+
+    /* Ligne 2 : sacs + paiement inline */
+    .card-meta{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+    .card-bags-tag{
+      font-size:11px;font-weight:700;
+      background:#f1f3f9;color:#556;
+      padding:3px 9px;border-radius:10px;
+      display:flex;align-items:center;gap:4px;
+    }
+    .card-pay-tag{
+      font-size:11px;font-weight:800;
+      padding:3px 9px;border-radius:10px;
+      display:flex;align-items:center;gap:4px;
+    }
+    .card-pay-tag.unpaid{background:#fef2f2;color:#b91c1c;}
+    .card-pay-tag.partial{background:#fffbeb;color:#92400e;}
+    .card-pay-tag.paid{background:#f0fdf4;color:#166534;}
+    .card-recur-tag{font-size:11px;font-weight:700;background:#f1f3f9;color:#556;padding:3px 9px;border-radius:10px;}
+
+    /* Bloc adresse(s) */
+    .card-addr-block{
+      background:#f8f9fc;
+      border-radius:12px;
+      padding:10px 12px;
+      margin-bottom:10px;
+      display:flex;flex-direction:column;gap:6px;
+    }
+    .card-addr-row{display:flex;align-items:center;gap:8px;}
+    .card-addr-icon{
+      width:28px;height:28px;border-radius:8px;
+      display:flex;align-items:center;justify-content:center;
+      font-size:13px;flex-shrink:0;
+    }
+    .card-addr-icon.collect{background:#fff3e0;}
+    .card-addr-icon.deliver{background:#e3f2fd;}
+    .card-addr-icon.same{background:#f3e5f5;}
+    .card-addr-text{font-size:12px;font-weight:600;color:#334;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .card-addr-actions{display:flex;gap:5px;flex-shrink:0;}
+    .mini-waze{
+      display:flex;align-items:center;gap:3px;
+      background:#33ccff;color:#fff;
+      font-size:10px;font-weight:900;
+      padding:4px 9px;border-radius:8px;
+      text-decoration:none;white-space:nowrap;
+    }
+    .mini-waze:active{opacity:.8;color:#fff;}
+    .mini-wa{
+      width:28px;height:28px;border-radius:8px;
+      background:#25D366;color:#fff;
+      font-size:13px;border:none;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;
+      text-decoration:none;
+    }
+    .mini-wa:active{opacity:.8;}
+
+    /* Bloc dates */
+    .card-dates-block{
+      display:grid;grid-template-columns:1fr 1fr;
+      gap:6px;margin-bottom:10px;
+    }
+    .card-date-cell{
+      background:#f8f9fc;border-radius:10px;
+      padding:8px 10px;
+      display:flex;flex-direction:column;gap:1px;
+    }
+    .card-date-cell.overdue{background:#fff5f5;border:1px solid #fecaca;}
+    .card-date-label{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#9aa;}
+    .card-date-cell.overdue .card-date-label{color:#ef4444;}
+    .card-date-val{font-size:13px;font-weight:700;color:#223;}
+    .card-date-cell.overdue .card-date-val{color:#b91c1c;}
+    .card-date-time{font-size:11px;color:#789;font-weight:600;}
+
+    /* Note client */
+    .card-note-row{
+      font-size:11px;color:#667;
+      font-style:italic;
+      padding:0 2px 10px;
+      display:flex;align-items:flex-start;gap:5px;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+
+    /* Prix */
+    .card-price{
+      font-size:13px;font-weight:800;color:#223;
+      padding:0 2px 10px;
+    }
+
+    /* Photos */
+    .card-photos-row{display:flex;gap:5px;padding-bottom:10px;overflow-x:auto;}
+    .card-photo-thumb{width:52px;height:52px;border-radius:9px;object-fit:cover;flex-shrink:0;border:2px solid #e8eaf6;cursor:pointer;}
+
+    /* Barre livraison confirmée */
+    .card-delivered{
+      background:#f0fdf4;
+      border-top:1px solid #bbf7d0;
+      padding:8px 16px;
+      font-size:11px;font-weight:700;color:#166534;
+      display:flex;align-items:center;gap:6px;
+    }
+
+    /* Séparateur */
+    .card-divider{height:1px;background:#f0f2f8;margin:0 16px;}
+
+    /* Ligne d'actions icônes */
+    .card-icon-row{
+      display:flex;align-items:center;
+      padding:8px 10px;gap:4px;
+    }
+    .ci-btn{
+      width:40px;height:40px;border-radius:10px;border:none;
+      background:#f4f5f9;color:#445;
+      font-size:15px;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;
+      transition:background .12s;
+      flex-shrink:0;
+    }
+    .ci-btn:active{background:#e8eaf6;transform:scale(.92);}
+    .ci-spacer{flex:1;}
+
+    /* Bouton principal de statut suivant */
+    .card-cta{
+      flex:1;
+      min-width:0;
+      height:40px;
+      border-radius:10px;border:none;
+      font-size:12px;font-weight:800;
+      cursor:pointer;
+      display:flex;align-items:center;justify-content:center;gap:5px;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+      padding:0 10px;
+    }
+    .card.sc .card-cta{background:var(--vi);color:#fff;}
+    .card.sv .card-cta{background:var(--bl);color:#fff;}
+    .card.sl .card-cta{background:var(--gn);color:#fff;}
+    .card.st .card-cta{background:#f4f5f9;color:#aaa;cursor:default;}
+    .card-cta:active{opacity:.85;transform:scale(.98);}
+
+    /* Stepper statut (4 cercles) */
+    .card-stepper{
+      display:flex;align-items:center;
+      padding:10px 16px;gap:0;
+    }
+    .cs-dot{
+      width:24px;height:24px;border-radius:50%;
+      border:2px solid #dde;
+      background:#fff;
+      display:flex;align-items:center;justify-content:center;
+      font-size:10px;font-weight:800;color:#bbb;
+      flex-shrink:0;
+      cursor:pointer;
+      transition:all .15s;
+    }
+    .cs-dot.done{background:var(--gn);border-color:var(--gn);color:#fff;}
+    .cs-dot.active{border-color:var(--navy);background:#fff;color:var(--navy);}
+    .cs-line{flex:1;height:2px;background:#dde;}
+    .cs-line.done{background:var(--gn);}
+
+    /* sbadge pour la fiche client (réutilisé) */
     .sbadge{flex-shrink:0;font-size:10px;font-weight:800;padding:4px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.6px;}
     .sbadge.bc{background:#fff3e0;color:var(--or);}.sbadge.bv{background:#f3e5f5;color:var(--vi);}.sbadge.bl{background:#e3f2fd;color:var(--bl);}.sbadge.bt{background:#e8f5e9;color:var(--gn);}
-    /* Badge paiement */
     .pay-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;padding:3px 8px;border-radius:12px;margin-left:6px;vertical-align:middle;}
     .pay-badge.unpaid{background:#fef2f2;color:var(--red);border:1px solid #fecaca;}
     .pay-badge.partial{background:#fffbeb;color:#b45309;border:1px solid #fde68a;}
     .pay-badge.paid{background:#f0fdf4;color:var(--gn);border:1px solid #bbf7d0;}
-    .card-addr{display:flex;align-items:center;gap:8px;padding:0 14px 6px;}
-    .addr-txt{font-size:12px;color:#567;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    .waze-btn{flex-shrink:0;display:flex;align-items:center;gap:5px;background:var(--waze);color:#fff;font-size:11px;font-weight:900;padding:5px 10px;border-radius:8px;text-decoration:none;white-space:nowrap;}
-    .waze-btn:active{opacity:.8;color:#fff;}
-    .card-dates{display:flex;gap:6px;padding:0 14px 6px;flex-wrap:wrap;}
-    .dchip{font-size:11px;background:var(--mist);color:#456;padding:4px 10px;border-radius:8px;}
-    .dchip.ov{background:#fff3e0;color:#bf360c;font-weight:700;}
-    /* Note client sur la carte */
-    .card-note{font-size:11px;color:#667;padding:0 14px 8px;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    /* Confirmation livraison */
-    .delivered-bar{background:#f0fdf4;border-top:1px solid #bbf7d0;padding:6px 14px;font-size:11px;color:var(--gn);font-weight:700;display:flex;align-items:center;gap:6px;}
-    .card-actions{border-top:1px solid #f0f0f0;display:flex;align-items:center;padding:8px 10px;gap:6px;}
-    .sbtn{flex:1;font-size:9.5px;font-weight:700;border:2px solid;border-radius:9px;padding:11px 2px;cursor:pointer;background:#fff;text-align:center;transition:all .15s;min-height:44px;}
-    .sbtn.bc2{border-color:var(--or);color:var(--or);}.sbtn.bv2{border-color:var(--vi);color:var(--vi);}.sbtn.bl2{border-color:var(--bl);color:var(--bl);}.sbtn.bt2{border-color:var(--gn);color:var(--gn);}
-    .sbtn.abc{background:var(--or);color:#fff;}.sbtn.abv{background:var(--vi);color:#fff;}.sbtn.abl{background:var(--bl);color:#fff;}.sbtn.abt{background:var(--gn);color:#fff;}
-    .ibtn{width:44px;height:44px;border-radius:10px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;}
-    .ibtn.ed{background:#f3f4f6;color:#3949ab;}.ibtn.dl{background:#fef2f2;color:#c62828;}
-    .ibtn:active{transform:scale(.92);}
-    /* Bouton Livrer maintenant */
-    .deliver-now-btn{width:100%;border:2px solid var(--gn);color:var(--gn);background:#fff;border-radius:9px;padding:10px;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin:0 10px 8px;width:calc(100% - 20px);}
-    .deliver-now-btn:active{background:var(--gn);color:#fff;}
-    /* Bouton WhatsApp */
-    .whatsapp-btn{flex-shrink:0;display:flex;align-items:center;gap:5px;background:#25D366;color:#fff;font-size:11px;font-weight:900;padding:5px 10px;border-radius:8px;text-decoration:none;white-space:nowrap;border:none;cursor:pointer;}
-    .whatsapp-btn:active{opacity:.8;}
 
     #empty{text-align:center;padding:60px 20px;color:#aaa;}
     .eico{font-size:48px;margin-bottom:16px;}
@@ -1164,102 +1334,154 @@ var STATUS_MAP={collecte:"sc",traitement:"sv",livraison:"sl",termine:"st"};
 var BADGE_MAP={collecte:"bc",traitement:"bv",livraison:"bl",termine:"bt"};
 var LABEL_MAP={collecte:"Collecte",traitement:"Traitement",livraison:"Livraison",termine:"Terminé"};
 
+var STATUS_STEPS=["collecte","traitement","livraison","termine"];
+var STATUS_ICONS={"collecte":"📦","traitement":"🧺","livraison":"🚚","termine":"✓"};
+var CTA_NEXT={"collecte":["🧺","Traitement","traitement"],"traitement":["🚚","Livraison","livraison"],"livraison":["✍️","Signer","sign"],"termine":["✓","Terminé",""]};
+var PAY_ICONS={"unpaid":"💸","partial":"⏳","paid":"✓"};
+
 function buildCard(c){
   var div=document.createElement("div");
   div.className="card "+(STATUS_MAP[c.status]||"sc");
   div.dataset.id=c.id;
-  var bcls=BADGE_MAP[c.status]||"bc";
+
   var collectAddr=c.collectAddress||c.address||"";
   var deliverAddr=c.deliverAddress||c.address||"";
-  var sameAddr=collectAddr===deliverAddr;
+  var sameAddr=!deliverAddr||collectAddr===deliverAddr;
   var coOv=isOv(c.collectDate,c.status);
   var deOv=isOv(c.deliverDate,c.status);
   var pay=c.payment||"unpaid";
-  var payBadge=pay!=="paid"||c.status==="traitement"||c.status==="livraison"
-    ?"<span class='pay-badge "+PAY_CLASSES[pay]+"'>"+PAY_LABELS[pay]+"</span>":"";
+  var wl=buildWhatsAppLink(c,"deliver");
 
-  // Adresses
-  var addrRow="";
+  // ── Stepper ──────────────────────────────────────────────
+  var stepperHtml="<div class='card-stepper'>";
+  STATUS_STEPS.forEach(function(s,i){
+    var idx=STATUS_STEPS.indexOf(c.status);
+    var cls=i<idx?"done":i===idx?"active":"";
+    stepperHtml+="<div class='cs-dot "+cls+"' data-a='status' data-v='"+s+"' title='"+LABEL_MAP[s]+"'>"+STATUS_ICONS[s]+"</div>";
+    if(i<3)stepperHtml+="<div class='cs-line"+(i<idx?" done":"")+"'></div>";
+  });
+  stepperHtml+="</div>";
+
+  // ── Adresses ─────────────────────────────────────────────
+  var addrHtml="<div class='card-addr-block'>";
   if(sameAddr&&collectAddr){
     var wz=wazeHref(collectAddr);
-    var wl=buildWhatsAppLink(c,"deliver");
-    addrRow="<div class='card-addr'><div class='addr-txt'>📍 "+esc(collectAddr)+"</div>"
-      +(wz?"<a class='waze-btn' href='"+esc(wz)+"' target='_blank'>↗ Waze</a>":"")
-      +(wl?"<a class='whatsapp-btn' href='"+esc(wl)+"' target='_blank'>💬</a>":"")
-      +"</div>";
+    addrHtml+="<div class='card-addr-row'>"
+      +"<div class='card-addr-icon same'>📍</div>"
+      +"<div class='card-addr-text'>"+esc(collectAddr.split(",")[0])+"</div>"
+      +"<div class='card-addr-actions'>"
+      +(wz?"<a class='mini-waze' href='"+esc(wz)+"' target='_blank'>↗ Waze</a>":"")
+      +(wl?"<a class='mini-wa' href='"+esc(wl)+"' target='_blank'>💬</a>":"")
+      +"</div></div>";
   } else {
-    if(collectAddr){var wc=wazeHref(collectAddr);addrRow+="<div class='card-addr'><div class='addr-txt'>📦 "+esc(collectAddr)+"</div>"+(wc?"<a class='waze-btn' href='"+esc(wc)+"' target='_blank'>↗ Waze</a>":"")+"</div>";}
+    if(collectAddr){
+      var wc=wazeHref(collectAddr);
+      addrHtml+="<div class='card-addr-row'>"
+        +"<div class='card-addr-icon collect'>📦</div>"
+        +"<div class='card-addr-text'>"+esc(collectAddr.split(",")[0])+"</div>"
+        +"<div class='card-addr-actions'>"
+        +(wc?"<a class='mini-waze' href='"+esc(wc)+"' target='_blank'>↗</a>":"")
+        +"</div></div>";
+    }
     if(deliverAddr){
-      var wd=wazeHref(deliverAddr);var wld=buildWhatsAppLink(c,"deliver");
-      addrRow+="<div class='card-addr'><div class='addr-txt'>🚚 "+esc(deliverAddr)+"</div>"
-        +(wd?"<a class='waze-btn' href='"+esc(wd)+"' target='_blank'>↗ Waze</a>":"")
-        +(wld?"<a class='whatsapp-btn' href='"+esc(wld)+"' target='_blank'>💬</a>":"")
-        +"</div>";
+      var wd=wazeHref(deliverAddr);
+      addrHtml+="<div class='card-addr-row'>"
+        +"<div class='card-addr-icon deliver'>🚚</div>"
+        +"<div class='card-addr-text'>"+esc(deliverAddr.split(",")[0])+"</div>"
+        +"<div class='card-addr-actions'>"
+        +(wd?"<a class='mini-waze' href='"+esc(wd)+"' target='_blank'>↗</a>":"")
+        +(wl?"<a class='mini-wa' href='"+esc(wl)+"' target='_blank'>💬</a>":"")
+        +"</div></div>";
     }
   }
+  addrHtml+="</div>";
 
-  // Prix
-  var priceStr=c.price?(" · "+c.price+"€"):"";
+  // ── Dates ────────────────────────────────────────────────
+  var datesHtml="<div class='card-dates-block'>"
+    +"<div class='card-date-cell"+(coOv?" overdue":"")+"'>"
+    +"<div class='card-date-label'>Collecte</div>"
+    +"<div class='card-date-val'>"+(c.collectDate?fmtDate(c.collectDate):"—")+"</div>"
+    +(c.collectTime?"<div class='card-date-time'>"+c.collectTime+"</div>":"")
+    +"</div>"
+    +"<div class='card-date-cell"+(deOv?" overdue":"")+"'>"
+    +"<div class='card-date-label'>Livraison"+(c.price?" · "+c.price+"€":"")+"</div>"
+    +"<div class='card-date-val'>"+(c.deliverDate?fmtDate(c.deliverDate):"—")+"</div>"
+    +(c.deliverTime?"<div class='card-date-time'>"+c.deliverTime+"</div>":"")
+    +"</div>"
+    +"</div>";
 
-  // Note client
-  var noteRow=c.clientNote?"<div class='card-note'>📝 "+esc(c.clientNote)+"</div>":"";
-
-  // Photos
-  var photosRow="";
-  if(c.photos&&c.photos.length){
-    photosRow="<div class='card-photos'>";
-    c.photos.forEach(function(p,i){
-      photosRow+="<img class='card-photo-thumb' src='"+p.data+"' data-id='"+c.id+"' data-idx='"+i+"' alt='photo'/>";
-    });
-    photosRow+="</div>";
-  }
-
-  // Confirmation livraison
-  var deliveredBar="";
+  // ── Livraison confirmée ───────────────────────────────────
+  var deliveredHtml="";
   if(c.deliveredAt){
     var dt=new Date(c.deliveredAt);
-    var dtStr=dt.toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit"})+" à "+dt.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
-    deliveredBar="<div class='delivered-bar'>✅ Livré le "+dtStr+(c.signature?" · Signé":"")+"</div>";
+    deliveredHtml="<div class='card-delivered'>✅ Livré le "
+      +dt.toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit"})
+      +" à "+dt.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})
+      +(c.signature?" · Signé ✍️":"")+"</div>";
   }
 
-  // Boutons statut
-  var aBc=c.status==="collecte"?" abc":"";var aBv=c.status==="traitement"?" abv":"";
-  var aBl=c.status==="livraison"?" abl":"";var aBt=c.status==="termine"?" abt":"";
+  // ── Photos ───────────────────────────────────────────────
+  var photosHtml="";
+  if(c.photos&&c.photos.length){
+    photosHtml="<div class='card-photos-row'>";
+    c.photos.forEach(function(p,i){
+      photosHtml+="<img class='card-photo-thumb' src='"+p.data+"' data-id='"+c.id+"' data-idx='"+i+"' alt='photo'/>";
+    });
+    photosHtml+="</div>";
+  }
 
-  // Bouton "Livrer maintenant" si statut livraison
-  var deliverNowBtn=c.status==="livraison"
-    ?"<button class='deliver-now-btn' data-a='deliver-now'>✍️ Livraison avec signature</button>":"";
+  // ── Bouton CTA ───────────────────────────────────────────
+  var cta=CTA_NEXT[c.status]||["","",""];
+  var ctaAction=cta[2]==="sign"?"deliver-now":cta[2]?"status":"";
+  var ctaVal=cta[2]==="sign"?"":cta[2];
 
-  // Bouton photo collecte
-  var photoBtn=c.status==="collecte"
-    ?"<button class='ibtn' style='background:#e8f5e9;color:"+("#2e7d32")+"' data-a='add-photo' title='Ajouter photo'>📸</button>":"";
+  // ── Icônes d'action ──────────────────────────────────────
+  var photoIcon=c.status==="collecte"
+    ?"<button class='ci-btn' data-a='add-photo' title='Photo'>📸</button>":"";
 
   div.innerHTML=
-    "<div class='card-head'><div><div class='cname'>"+esc(c.name)+payBadge+"</div>"
-    +(c.bags&&c.bags>0?"<div class='cbags'>🎒 "+c.bags+" sac"+(c.bags>1?"s":"")+"</div>":"")
+    // Bandeau couleur
+    "<div class='card-ribbon'></div>"
+    // Corps
+    +"<div class='card-body'>"
+      // Ligne 1 : nom + statut
+      +"<div class='card-top'>"
+        +"<div class='card-name'>"+esc(c.name)+"</div>"
+        +"<div class='card-status-pill'>"+LABEL_MAP[c.status]+"</div>"
+      +"</div>"
+      // Ligne 2 : meta tags
+      +"<div class='card-meta'>"
+        +(c.bags&&c.bags>0?"<div class='card-bags-tag'>🎒 "+c.bags+" sac"+(c.bags>1?"s":"")+"</div>":"")
+        +"<div class='card-pay-tag "+pay+"'>"+PAY_ICONS[pay]+" "+PAY_LABELS[pay]+"</div>"
+        +(c.recurrence&&c.recurrence!=="none"?"<div class='card-recur-tag'>🔁 "+{weekly:"hebdo",biweekly:"2 sem.",monthly:"mensuel"}[c.recurrence]+"</div>":"")
+      +"</div>"
+      // Adresses
+      +(collectAddr||deliverAddr?addrHtml:"")
+      // Dates
+      +datesHtml
+      // Note
+      +(c.clientNote?"<div class='card-note-row'>📝 "+esc(c.clientNote)+"</div>":"")
+      // Photos
+      +photosHtml
     +"</div>"
-    +"<div style='display:flex;gap:4px'>"
-    +"<button class='ibtn ed' data-a='client-sheet' title='Fiche client'>👤</button>"
-    +"<button class='ibtn ed' data-a='qr' title='Étiquette QR'>🏷️</button>"
-    +"<button class='ibtn ed' data-a='edit' title='Modifier'>✏️</button>"
-    +photoBtn
-    +"</div></div>"
-    +addrRow
-    +"<div class='card-dates'>"
-    +"<div class='dchip"+(coOv?" ov":"")+"'>📅 Collecte : "+fmtDateTime(c.collectDate,c.collectTime)+"</div>"
-    +"<div class='dchip"+(deOv?" ov":"")+"'>✓ Livraison : "+fmtDateTime(c.deliverDate,c.deliverTime)+(priceStr?"<span style='color:#567;margin-left:6px'>"+esc(priceStr)+"</span>":"")+"</div>"
-    +(c.recurrence&&c.recurrence!=="none"?"<div class='dchip'>🔁 "+{weekly:"/ semaine",biweekly:"/ 2 sem.",monthly:"/ mois"}[c.recurrence]+"</div>":"")
-    +"</div>"
-    +noteRow
-    +photosRow
-    +deliveredBar
-    +deliverNowBtn
-    +"<div class='card-actions'>"
-    +"<button class='sbtn bc2"+aBc+"' data-a='status' data-v='collecte'>📦 Collecte</button>"
-    +"<button class='sbtn bv2"+aBv+"' data-a='status' data-v='traitement'>🧺 Traitement</button>"
-    +"<button class='sbtn bl2"+aBl+"' data-a='status' data-v='livraison'>🚚 Livraison</button>"
-    +"<button class='sbtn bt2"+aBt+"' data-a='status' data-v='termine'>✓ Terminé</button>"
+    // Livraison confirmée
+    +deliveredHtml
+    // Stepper
+    +"<div class='card-divider'></div>"
+    +stepperHtml
+    // Barre d'icônes + CTA
+    +"<div class='card-divider'></div>"
+    +"<div class='card-icon-row'>"
+      +"<button class='ci-btn' data-a='client-sheet' title='Fiche client'>👤</button>"
+      +"<button class='ci-btn' data-a='qr' title='Tickets QR'>🏷️</button>"
+      +"<button class='ci-btn' data-a='edit' title='Modifier'>✏️</button>"
+      +photoIcon
+      +"<div class='ci-spacer'></div>"
+      +(ctaAction
+        ?"<button class='card-cta' data-a='"+ctaAction+"' "+(ctaVal?"data-v='"+ctaVal+"'":"")+">"+cta[0]+" "+cta[1]+"</button>"
+        :"<div class='card-cta'>"+cta[0]+"</div>")
     +"</div>";
+
   return div;
 }
 
@@ -1280,8 +1502,7 @@ document.getElementById("cards").addEventListener("click",function(e){
   else if(action==="client-sheet"){openClientModal(c);}
   else if(action==="qr"){openQrModal(c);}
   else if(action==="add-photo"){currentPhotoClientId=id;document.getElementById("photo-input").click();}
-  else if(action==="deliver-now"){openSigModal(id);}
-});
+  else if(action==="deliver-now"){openSigModal(id);}});
 
 // ── FICHE CLIENT ──────────────────────────────────────────
 function openClientModal(c){
