@@ -295,7 +295,35 @@
     .km-row{display:flex;align-items:center;gap:8px;}
     .km-input{flex:1;}
 
-    /* ── RESPONSIVE ── */
+    /* ── ÉTIQUETTES QR ── */
+    .label-preview{background:#fff;border:2px solid #e0e0e0;border-radius:12px;padding:16px;display:flex;gap:14px;align-items:center;}
+    .label-preview canvas{flex-shrink:0;border:1px solid #e8eaf6;border-radius:6px;}
+    .label-info{flex:1;min-width:0;}
+    .label-info .lname{font-size:14px;font-weight:800;color:var(--navy);margin-bottom:4px;word-break:break-word;}
+    .label-info .ldetail{font-size:11px;color:#567;line-height:1.7;}
+    .label-info .lbag{font-size:16px;font-weight:900;color:var(--or);margin-top:4px;}
+    .label-counter{display:flex;align-items:center;gap:10px;margin-top:10px;}
+    .label-counter button{width:32px;height:32px;border-radius:8px;border:2px solid #e0e0e0;background:#fff;font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+    .label-counter button:active{background:var(--mist);}
+    .label-counter span{font-size:14px;font-weight:800;min-width:28px;text-align:center;}
+
+    /* ── IMPRESSION ── */
+    @media print{
+      body > *{display:none !important;}
+      #print-zone{display:block !important;}
+      .print-page{page-break-after:always;padding:10mm;}
+      .print-label{
+        display:inline-flex;align-items:center;gap:8mm;
+        border:1.5px solid #333;border-radius:6px;
+        padding:6mm 8mm;margin:4mm;
+        width:calc(50% - 12mm);vertical-align:top;
+        box-shadow:none;background:#fff;
+      }
+      .print-label-qr canvas{width:28mm !important;height:28mm !important;}
+      .print-label-info .pname{font-size:13pt;font-weight:bold;margin-bottom:2mm;}
+      .print-label-info .pdetail{font-size:8pt;line-height:1.5;color:#333;}
+      .print-label-info .pbag{font-size:18pt;font-weight:bold;color:#000;margin-top:2mm;}
+    }
     @media(min-width:480px){
       .filters{justify-content:center;}
       #cards,.statsbar,.plan-section{max-width:600px;margin-left:auto;margin-right:auto;}
@@ -575,7 +603,26 @@
   </div>
 </div>
 
-<!-- Modal fiche client -->
+<!-- Modal QR étiquette -->
+<div class="client-modal-wrap" id="qr-modal">
+  <div class="client-modal-bg" id="qr-modal-bg"></div>
+  <div class="client-modal-card" style="max-width:400px">
+    <div class="client-modal-head">
+      <h2>🏷️ Étiquettes sacs</h2>
+      <button class="close-btn" id="qr-modal-close">✕</button>
+    </div>
+    <div class="client-modal-body" id="qr-modal-body" style="gap:12px">
+      <!-- rempli par JS -->
+    </div>
+    <div style="padding:14px 20px calc(20px + env(safe-area-inset-bottom));border-top:1px solid #eee;display:flex;flex-direction:column;gap:8px">
+      <button class="btn-save" id="qr-print-btn">🖨️ Imprimer les étiquettes</button>
+      <button class="btn-cancel" id="qr-cancel-btn">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Zone d'impression (invisible à l'écran) -->
+<div id="print-zone" style="display:none"></div>
 <div class="client-modal-wrap" id="client-modal">
   <div class="client-modal-bg" id="client-modal-bg"></div>
   <div class="client-modal-card">
@@ -1050,6 +1097,7 @@ function buildCard(c){
     +"</div>"
     +"<div style='display:flex;gap:4px'>"
     +"<button class='ibtn ed' data-a='client-sheet' title='Fiche client'>👤</button>"
+    +"<button class='ibtn ed' data-a='qr' title='Étiquette QR'>🏷️</button>"
     +"<button class='ibtn ed' data-a='edit' title='Modifier'>✏️</button>"
     +photoBtn
     +"</div></div>"
@@ -1087,6 +1135,7 @@ document.getElementById("cards").addEventListener("click",function(e){
   if(action==="status"){c.status=btn.dataset.v;pushClients();render();toast("Statut → "+LABEL_MAP[btn.dataset.v]);}
   else if(action==="edit"){openModal(c);}
   else if(action==="client-sheet"){openClientModal(c);}
+  else if(action==="qr"){openQrModal(c);}
   else if(action==="add-photo"){currentPhotoClientId=id;document.getElementById("photo-input").click();}
   else if(action==="deliver-now"){openSigModal(id);}
 });
@@ -1390,6 +1439,140 @@ document.getElementById("hours-list").addEventListener("click",function(e){
 
 // ── INIT ──────────────────────────────────────────────────
 fetchClients();
+</script>
+
+<!-- Lib QR Code (qrcode.js, vanilla, ~10ko) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+// ── QR CODE & ÉTIQUETTES ──────────────────────────────────
+var qrClient=null;
+var qrLabelCount=1; // nombre d'étiquettes à imprimer
+
+function buildQrData(c,bagIndex,total){
+  // Données encodées dans le QR : compact pour lisibilité scanners
+  var lines=[
+    "LLF:"+c.id,
+    c.name,
+    "Sac "+(bagIndex+1)+"/"+total,
+    c.collectAddress?(c.collectAddress.split(",")[0]):"",
+    c.collectDate?fmtDate(c.collectDate):"",
+    c.deliverDate?("Livr. "+fmtDate(c.deliverDate)):""
+  ];
+  return lines.filter(Boolean).join("\n");
+}
+
+function makeQrCanvas(data, size){
+  var wrap=document.createElement("div");
+  new QRCode(wrap,{text:data,width:size,height:size,colorDark:"#1d3a5f",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});
+  return wrap.querySelector("canvas")||wrap.querySelector("img");
+}
+
+function openQrModal(c){
+  qrClient=c;
+  qrLabelCount=c.bags&&c.bags>0?c.bags:1;
+  document.getElementById("qr-modal").classList.add("open");
+  renderQrModal();
+}
+
+function renderQrModal(){
+  var c=qrClient;
+  var body=document.getElementById("qr-modal-body");
+  body.innerHTML="";
+
+  // Compteur d'étiquettes
+  var counterDiv=document.createElement("div");
+  counterDiv.innerHTML="<div style='font-size:12px;font-weight:700;color:#567;margin-bottom:4px'>Nombre d'étiquettes à imprimer</div>"
+    +"<div class='label-counter'>"
+    +"<button id='qr-minus'>−</button>"
+    +"<span id='qr-count'>"+qrLabelCount+"</span>"
+    +"<button id='qr-plus'>+</button>"
+    +"<span style='font-size:12px;color:#999;margin-left:6px'>(1 par sac)</span>"
+    +"</div>";
+  body.appendChild(counterDiv);
+  document.getElementById("qr-minus").addEventListener("click",function(){if(qrLabelCount>1){qrLabelCount--;renderQrModal();}});
+  document.getElementById("qr-plus").addEventListener("click",function(){if(qrLabelCount<20){qrLabelCount++;renderQrModal();}});
+
+  // Aperçu : on montre la première étiquette
+  var preview=document.createElement("div");
+  preview.innerHTML="<div style='font-size:12px;font-weight:700;color:#567;margin-bottom:6px'>Aperçu étiquette</div>";
+  var labelDiv=document.createElement("div");
+  labelDiv.className="label-preview";
+
+  var qrData=buildQrData(c,0,qrLabelCount);
+  var qrEl=makeQrCanvas(qrData,96);
+  if(qrEl)labelDiv.appendChild(qrEl);
+
+  var info=document.createElement("div");
+  info.className="label-info";
+  info.innerHTML="<div class='lname'>"+esc(c.name)+"</div>"
+    +"<div class='ldetail'>"
+    +(c.collectAddress?"📍 "+esc(c.collectAddress.split(",")[0])+"<br>":"")
+    +(c.collectDate?"📅 Collecte : "+fmtDate(c.collectDate)+(c.collectTime?" "+c.collectTime:"")+"<br>":"")
+    +(c.deliverDate?"✓ Livraison : "+fmtDate(c.deliverDate)+(c.deliverTime?" "+c.deliverTime:"")+"<br>":"")
+    +(c.bags?"🎒 "+c.bags+" sac(s) total":"")
+    +"</div>"
+    +"<div class='lbag'>Sac 1/"+qrLabelCount+"</div>";
+  labelDiv.appendChild(info);
+  preview.appendChild(labelDiv);
+  body.appendChild(preview);
+
+  // Info comptage
+  if(qrLabelCount>1){
+    var note=document.createElement("div");
+    note.style.cssText="font-size:11px;color:#789;text-align:center;padding:4px 0";
+    note.textContent=qrLabelCount+" étiquettes seront imprimées (une par sac)";
+    body.appendChild(note);
+  }
+}
+
+document.getElementById("qr-modal-bg").addEventListener("click",function(){document.getElementById("qr-modal").classList.remove("open");});
+document.getElementById("qr-modal-close").addEventListener("click",function(){document.getElementById("qr-modal").classList.remove("open");});
+document.getElementById("qr-cancel-btn").addEventListener("click",function(){document.getElementById("qr-modal").classList.remove("open");});
+
+document.getElementById("qr-print-btn").addEventListener("click",function(){
+  var c=qrClient;if(!c)return;
+  var zone=document.getElementById("print-zone");
+  zone.innerHTML="";
+
+  // Génère toutes les étiquettes
+  var page=document.createElement("div");
+  page.className="print-page";
+
+  for(var i=0;i<qrLabelCount;i++){
+    var label=document.createElement("div");
+    label.className="print-label";
+
+    // QR
+    var qrWrap=document.createElement("div");
+    qrWrap.className="print-label-qr";
+    var qrData=buildQrData(c,i,qrLabelCount);
+    var qrEl=makeQrCanvas(qrData,112);
+    if(qrEl)qrWrap.appendChild(qrEl);
+    label.appendChild(qrWrap);
+
+    // Infos texte
+    var info=document.createElement("div");
+    info.className="print-label-info";
+    info.innerHTML="<div class='pname'>"+esc(c.name)+"</div>"
+      +"<div class='pdetail'>"
+      +(c.collectAddress?c.collectAddress.split(",")[0]+"<br>":"")
+      +(c.collectDate?"Collecte : "+fmtDate(c.collectDate)+(c.collectTime?" "+c.collectTime:"")+"<br>":"")
+      +(c.deliverDate?"Livraison : "+fmtDate(c.deliverDate)+(c.deliverTime?" "+c.deliverTime:""):"")
+      +"</div>"
+      +"<div class='pbag'>Sac "+(i+1)+"/"+qrLabelCount+"</div>";
+    label.appendChild(info);
+    page.appendChild(label);
+  }
+
+  zone.appendChild(page);
+
+  // Petit délai pour que le DOM soit rendu, puis impression
+  setTimeout(function(){
+    window.print();
+    // Nettoyage après impression
+    setTimeout(function(){zone.innerHTML="";},1000);
+  },200);
+});
 </script>
 </body>
 </html>
