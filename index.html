@@ -196,7 +196,133 @@
     .waze-port-link:last-child{border-bottom:none;}
     .waze-port-link:active{background:#f0faff;}
     .waze-port-icon{width:30px;height:30px;border-radius:8px;background:var(--waze);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
-    @media(min-width:480px){#cards,.statsbar,.plan-section{max-width:480px;margin-left:auto;margin-right:auto;}.filters{justify-content:center;}}
+
+    /* ── RESPONSIVE ─────────────────────────────────────────── */
+
+    /* Petits mobiles : rien à changer, c'est la base */
+
+    /* Grands mobiles / petites tablettes */
+    @media(min-width:480px){
+      .filters{justify-content:center;}
+      #cards,.statsbar,.plan-section{max-width:600px;margin-left:auto;margin-right:auto;}
+      .mcard,.port-card{max-width:520px;}
+    }
+
+    /* Tablette (768px+) : layout 2 colonnes */
+    @media(min-width:768px){
+      body{padding-bottom:24px;}
+
+      /* Topbar : logo plus grand */
+      .logo-card img{height:52px;}
+      .tclock{font-size:20px;}
+
+      /* On centre le contenu dans une colonne max 900px */
+      .plan-section,
+      .filters,
+      .statsbar,
+      #cards,
+      #empty{
+        max-width:900px;
+        margin-left:auto;
+        margin-right:auto;
+        width:100%;
+      }
+      .syncbar{justify-content:center;gap:24px;}
+
+      /* Planning : colonnes plus larges */
+      .day-col{width:180px;}
+
+      /* Filtres : centrés, pas de scroll horizontal */
+      .filters{
+        position:static;
+        flex-wrap:wrap;
+        justify-content:center;
+        padding:12px 20px;
+        overflow-x:visible;
+      }
+
+      /* Stats : pills plus espacées */
+      .statsbar{padding:14px 20px;gap:12px;}
+      .spill{padding:14px 12px;}
+      .snum{font-size:32px;}
+      .slbl{font-size:11px;}
+
+      /* Cartes : grille 2 colonnes */
+      #cards{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        padding:16px 20px 0;
+        gap:14px;
+      }
+
+      /* FAB et boutons flottants repositionnés */
+      .fab{bottom:28px;right:28px;}
+      .anchor-btn{bottom:calc(28px + 58px + 14px);right:28px;}
+      .clock-tab{bottom:28px;left:28px;}
+
+      /* Modales : bottom sheet → modal centré */
+      .modal-wrap{align-items:center;}
+      .mcard{
+        border-radius:20px;
+        max-width:560px;
+        max-height:90dvh;
+      }
+      .mhead{border-radius:20px 20px 0 0;}
+      .port-card{border-radius:20px;max-width:480px;}
+      .port-overlay{align-items:center;}
+      .waze-menu{right:28px;}
+    }
+
+    /* Desktop (1100px+) : layout 3 colonnes pour les cartes */
+    @media(min-width:1100px){
+      .plan-section,
+      .filters,
+      .statsbar,
+      #cards,
+      #empty{max-width:1200px;}
+
+      /* Planning : toute la semaine visible sans scroll */
+      .week-grid{overflow-x:visible;flex-wrap:nowrap;}
+      .day-col{flex:1;min-width:130px;width:auto;}
+
+      /* Cartes : grille 3 colonnes */
+      #cards{
+        grid-template-columns:repeat(3,1fr);
+        gap:16px;
+        padding:20px 24px 0;
+      }
+
+      /* Stats : textes légèrement plus grands */
+      .snum{font-size:36px;}
+
+      /* Filtres */
+      .filters{padding:14px 24px;}
+
+      /* Logo plus grand */
+      .logo-card img{height:62px;}
+
+      /* Hover states pour la souris */
+      .card{transition:box-shadow .2s,transform .2s;}
+      .card:hover{box-shadow:0 6px 24px rgba(0,0,0,.15);transform:translateY(-2px);}
+      .ftab:hover{background:var(--navy);color:#fff;}
+      .sbtn:hover{opacity:.85;}
+      .fab:hover{transform:scale(1.08);}
+      .anchor-btn:hover{transform:scale(1.08);}
+      .ibtn:hover{opacity:.8;}
+      .waze-btn:hover{opacity:.85;}
+      .pnav-btn:hover{background:var(--navy);color:#fff;}
+      .waze-port-link:hover{background:#f0faff;}
+    }
+
+    /* Très grand écran (1400px+) */
+    @media(min-width:1400px){
+      .plan-section,
+      .filters,
+      .statsbar,
+      #cards,
+      #empty{max-width:1400px;}
+      #cards{grid-template-columns:repeat(4,1fr);}
+    }
   </style>
 </head>
 <body>
