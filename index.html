@@ -204,7 +204,7 @@ body{color:var(--ink);min-height:100vh;font-family:'Inter',sans-serif;font-size:
     <button class="nav-btn active" data-page="accueil"><span class="nav-btn-ico">&#127968;</span><span class="nav-btn-txt">Sākums</span></button>
     <button class="nav-btn" data-page="contrats"><span class="nav-btn-ico">&#128196;</span><span class="nav-btn-txt">Līgumi</span></button>
     <button class="nav-btn" data-page="clients"><span class="nav-btn-ico">&#128101;</span><span class="nav-btn-txt">Klienti</span></button>
-    <button class="nav-btn" data-page="campagnes"><span class="nav-btn-ico">&#128197;</span><span class="nav-btn-txt">Kampaņas</span></button>
+    <button class="nav-btn" data-page="campagnes"><span class="nav-btn-ico">&#128197;</span><span class="nav-btn-txt">Reklāmas kampaņas</span></button>
     <button class="nav-btn" data-page="encaissements"><span class="nav-btn-ico">&#128182;</span><span class="nav-btn-txt">Ieņēmumi</span></button>
     <button class="nav-btn" data-page="ca" id="nav-ca"><span class="nav-btn-ico">&#128200;</span><span class="nav-btn-txt">Apgrozījums &amp; slēgšana</span></button>
   </nav>
@@ -278,12 +278,12 @@ const Store = {
         { id: 'u3', name: 'Pārdevējs 1', role: 'commercial', sellerId: 's2' }
       ],
       sellers: [{ id: 's1', name: 'Radio Monaco (tiešais)', rate: 0, direct: true }, { id: 's2', name: 'Pārdevējs 1', rate: 10, direct: false }],
-      contracts: [], campaigns: [], bookings: [], invoices: [], tariffs: [],
+      contracts: [], campaigns: [], bookings: [], invoices: [], tariffs: [], incidents: [],
       closures: {}, clientInfo: {}, odp: {}, settings: { tva: 21, payDelay: 30, remindDays: 7, checkDays: 7, antenna: 'Eric' }, log: []
     };
   },
   migrate(d) {   // anciennes données : un vendeur dont le nom contient « direct » est un client direct
-    d.tariffs = d.tariffs || [];
+    d.tariffs = d.tariffs || []; d.incidents = d.incidents || [];
     d.sellers.forEach(s => { if (s.direct === undefined) s.direct = /direct|tieš/i.test(s.name); });
     return d;
   },
@@ -548,6 +548,10 @@ function computeAlerts() {
     if (day <= 10 && db.contracts.some(isCA) && !db.closures[prev]) push('warning', 'Jāslēdz ' + ymLabel(prev) + ': pārnest parakstīto un pārraidīto apgrozījumu uz mēneša uzskaiti');
     Object.keys(db.closures).forEach(ym => { if (closureDrift(ym)) push('danger', ymLabel(ym) + ': skaitļi mainīti pēc slēgšanas (fiksētais pārskats ≠ pašreizējais aprēķins)'); });
   }
+  incidents().filter(x => ids.has(x.contractId) && x.status === 'open').forEach(x => {
+    const c = contractOf(x.contractId), cp = db.campaigns.find(k => k.id === x.campaignId);
+    push('danger', (c.odp || '—') + ' · ' + c.client + ' · ' + (cp ? cp.label : '') + ': ' + x.spots + ' klips(-i) nav pārraidīts(-i) ' + fdate(x.date) + ' reklāmas pauzē ' + x.slot + ' (' + x.cause + ') — jāpārraida atkārtoti vai jāizraksta kredītrēķins', c.id);
+  });
   const o = { danger: 0, warning: 1, info: 2 };
   return A.sort((a, b) => o[a.lvl] - o[b.lvl]);
 }
@@ -1071,7 +1075,7 @@ const setF = (grp, k, v) => { ST[grp][k] = v; renderAll(); };
    6. FORMULAIRES & ACTIONS (contrat, campagne, sponsoring, facture, règlement)
    ========================================================================== */
 /* ---------- Contrat ---------- */
-const TYPES = [{ v: 'publicite', l: 'Reklāma / kampaņa' }, { v: 'sponsoring', l: 'Raidījuma sponsorēšana' }, { v: 'communication', l: 'Radio Monaco komunikācija (bez rēķina)' }];
+const TYPES = [{ v: 'publicite', l: 'Reklāmas kampaņa (radio klipi)' }, { v: 'sponsoring', l: 'Raidījuma sponsorēšana' }, { v: 'communication', l: 'Radio Monaco komunikācija (bez rēķina)' }];
 function contractForm(id) {
   const c = id ? contractOf(id) : null;
   const com = me().role === 'commercial';
@@ -1188,7 +1192,7 @@ function delContract(id) {
   const c = contractOf(id); if (!isAdmin() || !c) return;
   const k = campsOf(c).length + invsOf(c).length + bksOf(c).length;
   if (!confirm('Neatgriezeniski dzēst līgumu ' + c.odp + ' (' + c.client + ')' + (k ? ' un tā ' + k + ' saistītās rindas' : '') + '?\nRP numurs netiks piešķirts atkārtoti.')) return;
-  db.campaigns = db.campaigns.filter(x => x.contractId !== id); db.invoices = db.invoices.filter(x => x.contractId !== id); db.bookings = db.bookings.filter(x => x.contractId !== id);
+  db.campaigns = db.campaigns.filter(x => x.contractId !== id); db.incidents = incidents().filter(x => x.contractId !== id); db.invoices = db.invoices.filter(x => x.contractId !== id); db.bookings = db.bookings.filter(x => x.contractId !== id);
   db.contracts = db.contracts.filter(x => x.id !== id);
   audit('Dzēšana', 'Līgums', id, c.odp + ' · ' + c.client); if (CM) { CM.el.remove(); CM = null; } commit();
 }
@@ -1207,12 +1211,12 @@ function campForm(cid, id) {
   const body = '<form onsubmit="return false">' + cols(
     fld('Kampaņa / nosaukums', 'label', cp ? cp.label : c.label, { req: true }),
     fld('Piešķirtā summa bez PVN (€)', 'amountHT', cp ? cp.amountHT : Math.max(left, 0), { req: true, type: 'number', step: '0.01', help: 'Atlikums sadalei līgumā: ' + eur(left) }),
-    fld('Klipu skaits (kopā)', 'spots', cp && cp.spots ? cp.spots : '', { type: 'number', step: '1', help: 'Neobligāti. Sadalīts proporcionāli pārraides dienām gada statistikai.' }),
+    fld('Reklāmas klipu skaits (kopā)', 'spots', cp && cp.spots ? cp.spots : '', { type: 'number', step: '1', help: 'Neobligāti. Sadalīts proporcionāli pārraides dienām gada statistikai.' }),
     fld('Pārraides sākums', 'start', cp ? cp.start : '', { type: 'date', req: true }),
     fld('Pārraides beigas', 'end', cp ? cp.end : '', { type: 'date', req: true }),
     fld('Ētera statuss', 'antenne', cp ? cp.antenne : 'none', { options: isSigned(c) ? ANTENNE : ANTENNE.slice(0, 1), help: isSigned(c) ? '' : 'Pieejams pēc līguma parakstīšanas.' })) + (isComm(c) ? '' : calcHtml()) + '</form>';
   openModal({
-    title: cp ? 'Labot kampaņu' : 'Jauna kampaņa', body, buttons: [
+    title: cp ? 'Labot reklāmas kampaņu' : 'Jauna reklāmas kampaņa', body, buttons: [
       {
         label: 'Saglabāt', cls: 'is-primary', onClick: (el, close) => {
           const f = fdata(el), a = round2(num(f.amountHT));
@@ -1257,10 +1261,60 @@ function checkAllOngoing() {
 }
 function delCampaign(id) {
   if (!isMgr() || !confirm('Dzēst šo kampaņu?')) return;
-  const cp = db.campaigns.find(x => x.id === id); db.campaigns = db.campaigns.filter(x => x.id !== id);
+  const cp = db.campaigns.find(x => x.id === id); db.campaigns = db.campaigns.filter(x => x.id !== id); db.incidents = incidents().filter(x => x.campaignId !== id);
   db.invoices.forEach(i => { if (i.campaignId === id) i.campaignId = ''; });
   audit('Dzēšana', 'Kampaņa', id, cp ? cp.label : ''); commit();
 }
+
+/* ---------- Pārraides incidenti: reklāmas klips nav pārraidīts reklāmas pauzē ---------- */
+const INC_CAUSES = ['Programmatūras kļūda (bug)', 'Tehniska kļūme raidītājā', 'Klips nav ievietots grafikā', 'Programmas izmaiņas ēterā', 'Cits'];
+const INC_STATUS = [{ v: 'open', l: 'Atvērts — jārisina' }, { v: 'redone', l: 'Pārraidīts atkārtoti' }, { v: 'credit', l: 'Kompensēts ar kredītrēķinu' }, { v: 'closed', l: 'Slēgts bez kompensācijas' }];
+const incidents = () => db.incidents || (db.incidents = []);
+const visIncidents = () => { const ids = visIds(); return incidents().filter(x => ids.has(x.contractId)); };
+const incsOfCamp = id => incidents().filter(x => x.campaignId === id);
+const incTag = x => x.status === 'open' ? '<span class="tag ko">Atvērts</span>' : x.status === 'redone' ? '<span class="tag ok">Pārraidīts atkārtoti</span>' : x.status === 'credit' ? '<span class="tag o25">Kredītrēķins</span>' : '<span class="tag grey">Slēgts</span>';
+function incForm(campId, id) {
+  if (!isMgr()) return;
+  const inc = id ? incidents().find(x => x.id === id) : null, cp = db.campaigns.find(x => x.id === (inc ? inc.campaignId : campId)); if (!cp) return;
+  const c = contractOf(cp.contractId);
+  const body = '<form onsubmit="return false"><p class="mb-3">' + esc(c.odp) + ' · ' + esc(c.client) + ' · <b>' + esc(cp.label) + '</b></p>' + cols(
+    fld('Pārraides datums', 'date', inc ? inc.date : today(), { type: 'date', req: true, max: today() }),
+    fld('Reklāmas pauze (laiks)', 'slot', inc ? inc.slot : '', { req: true, ph: 'piem. 08:15' }),
+    fld('Nepārraidītie klipi', 'spots', inc ? inc.spots : 1, { type: 'number', step: '1', req: true }),
+    fld('Iemesls', 'cause', inc ? inc.cause : INC_CAUSES[0], { options: INC_CAUSES.map(x => ({ v: x, l: x })) }),
+    fld('Statuss', 'status', inc ? inc.status : 'open', { options: INC_STATUS }),
+    fld('Risinājums', 'resolution', inc ? inc.resolution : '', { ph: 'piem. atkārtoti 12.10. 08:45 vai kredītrēķins 90 €' })) +
+    fld('Apraksts', 'note', inc ? inc.note : '', { type: 'textarea' }) + '</form>';
+  openModal({
+    title: inc ? 'Labot incidentu' : 'Jauns pārraides incidents', body, buttons: [
+      {
+        label: 'Saglabāt', cls: 'is-primary', onClick: (el, close) => {
+          const f = fdata(el), n = Math.round(num(f.spots));
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(f.date || '') || f.date > today()) return errBox('Nederīgs datums (nevar būt nākotnē).');
+          if (!(f.slot || '').trim()) return errBox('Norādiet reklāmas pauzi.');
+          if (!(n > 0)) return errBox('Nepārraidīto klipu skaitam jābūt lielākam par 0.');
+          const tgt = inc || { id: uid(), campaignId: cp.id, contractId: c.id, createdAt: new Date().toISOString(), by: me().name };
+          const was = tgt.status;
+          Object.assign(tgt, { date: f.date, slot: f.slot.trim(), spots: n, cause: f.cause, status: f.status, resolution: (f.resolution || '').trim(), note: (f.note || '').trim() });
+          tgt.resolvedDate = f.status === 'open' ? '' : (was !== f.status ? today() : tgt.resolvedDate || today());
+          if (!inc) incidents().push(tgt);
+          audit(inc ? 'Labošana' : 'Izveide', 'Incidents', tgt.id, c.odp + ' · ' + cp.label + ' · ' + fdate(f.date) + ' ' + tgt.slot + ' · ' + n + ' klips(-i)'); close(); commit();
+        }
+      },
+      { label: 'Atcelt', onClick: (el, close) => close() }]
+  });
+}
+function delIncident(id) { if (!isAdmin() || !confirm('Dzēst šo incidentu?')) return; db.incidents = incidents().filter(x => x.id !== id); audit('Dzēšana', 'Incidents', id, ''); commit(); }
+function incTable(list, withCamp) {
+  return '<div class="tw"><table class="table is-fullwidth"><thead><tr><th>Datums</th><th>Reklāmas pauze</th>' + (withCamp ? '<th>Klients · kampaņa</th>' : '<th>Kampaņa</th>') + '<th class="num">Klipi</th><th>Iemesls</th><th>Statuss</th><th>Risinājums</th><th></th></tr></thead><tbody>' +
+    list.map(x => {
+      const cp = db.campaigns.find(k => k.id === x.campaignId), c = contractOf(x.contractId);
+      return '<tr><td>' + fdate(x.date) + '</td><td><b>' + esc(x.slot) + '</b></td>' + (withCamp ? '<td><a onclick="openContract(\'' + c.id + '\')"><b>' + esc(c.client) + '</b></a><br><small class="muted">' + esc(cp ? cp.label : '') + '</small></td>' : '<td>' + esc(cp ? cp.label : '') + '</td>') +
+        '<td class="num"><b>' + x.spots + '</b></td><td>' + esc(x.cause) + (x.note ? '<br><small class="muted">' + esc(x.note) + '</small>' : '') + '</td><td>' + incTag(x) + '</td><td>' + esc(x.resolution || '') + '</td>' +
+        '<td class="num">' + (isMgr() ? '<button class="button is-small is-light-orange" onclick="incForm(\'\',\'' + x.id + '\')">Labot</button>' : '') + (isAdmin() ? ' <button class="button is-small" onclick="delIncident(\'' + x.id + '\')">✕</button>' : '') + '</td></tr>';
+    }).join('') + '</tbody></table></div>';
+}
+const incBtn = cp => { const n = incsOfCamp(cp.id).filter(x => x.status === 'open').length; return (n ? '<span class="tag ko" title="Atvērtie incidenti">⚠ ' + n + '</span> ' : '') + (isMgr() && cp.antenne !== 'none' ? '<button class="button is-small" title="Reģistrēt nepārraidītu klipu" onclick="incForm(\'' + cp.id + '\')">⚠ Incidents</button>' : ''); };
 
 /* ---------- Réservations de sponsoring ---------- */
 function bookForm(cid, id) {
@@ -1413,7 +1467,7 @@ function renderContractModal(m) {
   const campSum = round2(sum(camps, x => x.amountHT)), campDiff = round2(campSum - c.amountHT);
   const invSum = round2(sum(invs, x => x.amountHT));
   const campRows = camps.map(x => '<tr><td>' + esc(x.label) + '</td><td>' + fdate(x.start) + ' → ' + fdate(x.end) + '</td><td class="num">' + eur(x.amountHT) + '</td><td class="num">' + (x.spots ? kInt(x.spots) : '—') + '</td><td class="' + ANT_CLS[x.antenne] + '">' + (ANTENNE.find(a => a.v === x.antenne).l) + '</td>' +
-    '<td class="num">' + (mgr ? '<button class="button is-small is-light-orange" onclick="campForm(\'' + c.id + '\',\'' + x.id + '\')">Labot</button> <button class="button is-small" onclick="delCampaign(\'' + x.id + '\')">✕</button>' : '') + '</td></tr>').join('');
+    '<td class="num">' + incBtn(x) + ' ' + (mgr ? '<button class="button is-small is-light-orange" onclick="campForm(\'' + c.id + '\',\'' + x.id + '\')">Labot</button> <button class="button is-small" onclick="delCampaign(\'' + x.id + '\')">✕</button>' : '') + '</td></tr>').join('');
   const bkRows = bks.map(x => '<tr><td>' + esc(x.emission) + '</td><td>' + esc(x.slot) + '</td><td>' + fdate(x.start) + ' → ' + fdate(x.end) + '</td><td>' + (x.status === 'confirme' ? '<span class="tag ok">Apstiprināts</span>' : '<span class="tag o25">Rezervēts</span>') + '</td>' +
     '<td class="num">' + (mgr ? '<button class="button is-small is-light-orange" onclick="bookForm(\'' + c.id + '\',\'' + x.id + '\')">Labot</button> <button class="button is-small" onclick="delBooking(\'' + x.id + '\')">✕</button>' : '') + '</td></tr>').join('');
   const invRows = invs.map(i => { const s = invStatus(i); return '<tr><td>' + (i.invoiceNo ? esc(i.invoiceNo) : '<span class="muted">plānots</span>') + '</td><td>' + fdate(i.invoiceDate) + '</td><td class="num">' + eur(i.amountHT) + '</td><td class="num">' + eur(invTTC(i)) + '</td><td class="num">' + eur(invPaid(i)) + '</td><td class="num">' + eur(invReste(i)) + '</td><td><span class="tag ' + s.cls + '">' + s.l + '</span></td>' +
@@ -1425,8 +1479,9 @@ function renderContractModal(m) {
     '<div class="column is-4"><span class="muted">' + (isProp(c) ? 'Piedāvāts' : 'Parakstīts') + '</span><br><b>' + fdate(c.signedDate) + '</b>' + (c.proposalDate && isSigned(c) && !isComm(c) ? ' <small class="muted">· RP izveidots ' + fdate(c.proposalDate) + '</small>' : '') + '</div><div class="column is-4"><span class="muted">Summa bez PVN</span><br><b>' + (isComm(c) ? 'Bez rēķina' : eur(c.amountHT)) + '</b></div><div class="column is-4"><span class="muted">Nosaukums</span><br><b>' + esc(c.label) + '</b></div>' +
     '<div class="column is-12"><span class="muted">Faili</span> ' + filesHtml(c) + ' <button class="button is-small is-light-orange" onclick="dropboxDialog(\'' + c.id + '\')">📎 Augšupielādēt Dropbox</button>' + (c.driveUrl ? ' &nbsp;·&nbsp; <a href="' + esc(c.driveUrl) + '" target="_blank" rel="noopener">Drive saite</a>' : '') + (c.pricing ? ' &nbsp;·&nbsp; <span class="muted">Tarifs:</span> ' + esc(pricingText(c.pricing)) : '') + (c.notes ? ' &nbsp;·&nbsp; <span class="muted">Piezīmes:</span> ' + esc(c.notes) : '') + '</div></div></div>' +
     '<div class="box"><div class="box-h"><h2>8 soļu uzskaite</h2><span class="sub">' + p.done + ' / ' + p.total + ' soļi</span></div>' + stepHtml + '</div>' +
-    '<div class="box"><div class="box-h"><h2>Kampaņas</h2><div><span class="sub">Kopā ' + eur(campSum) + ' / ' + eur(c.amountHT) + (Math.abs(campDiff) > 0.01 && !isComm(c) ? ' <b style="color:var(--danger)">(starpība ' + eur(campDiff) + ')</b>' : '') + (isCA(c) ? ' · atlikums pārraidei ' + eur(resteDiffuser(c)) : '') + '</span> ' + (mgr && !isLost(c) ? '<button class="button is-small is-primary" onclick="campForm(\'' + c.id + '\')">+ Kampaņa</button>' : '') + '</div></div>' +
+    '<div class="box"><div class="box-h"><h2>Reklāmas kampaņas</h2><div><span class="sub">Kopā ' + eur(campSum) + ' / ' + eur(c.amountHT) + (Math.abs(campDiff) > 0.01 && !isComm(c) ? ' <b style="color:var(--danger)">(starpība ' + eur(campDiff) + ')</b>' : '') + (isCA(c) ? ' · atlikums pārraidei ' + eur(resteDiffuser(c)) : '') + '</span> ' + (mgr && !isLost(c) ? '<button class="button is-small is-primary" onclick="campForm(\'' + c.id + '\')">+ Reklāmas kampaņa</button>' : '') + '</div></div>' +
     (camps.length ? '<div class="tw"><table class="table is-fullwidth"><thead><tr><th>Kampaņa</th><th>Periods</th><th class="num">Bez PVN</th><th class="num">Klipi</th><th>Ēters</th><th></th></tr></thead><tbody>' + campRows + '</tbody></table></div>' : '<div class="empty">Nav reģistrētu kampaņu.</div>') + '</div>' +
+    (camps.length ? (() => { const li = incidents().filter(x => x.contractId === c.id).sort((a, b) => b.date.localeCompare(a.date)); return '<div class="box"><div class="box-h"><h2>Pārraides incidenti</h2><span class="sub">Reklāmas klipi, kas netika pārraidīti reklāmas pauzē</span></div>' + (li.length ? incTable(li, false) : '<div class="empty">Nav incidentu ✅</div>') + '</div>'; })() : '') +
     (c.type === 'sponsoring' ? '<div class="box"><div class="box-h"><h2>Sponsorēto raidījumu rezervācija</h2>' + (mgr ? '<button class="button is-small is-primary" onclick="bookForm(\'' + c.id + '\')">+ Rezervācija</button>' : '') + '</div>' +
       (bks.length ? '<div class="tw"><table class="table is-fullwidth"><thead><tr><th>Raidījums</th><th>Laiks</th><th>Periods</th><th>Statuss</th><th></th></tr></thead><tbody>' + bkRows + '</tbody></table></div>' : '<div class="empty">Nav rezervētu raidījumu.</div>') + '</div>' : '') +
     (!isCA(c) ? '<div class="box"><div class="box-h"><h2>Rēķini un ieņēmumi</h2></div><div class="empty">' + (isComm(c) ? 'Komunikācijas kampaņa: bez rēķina, neietilpst apgrozījumā.' : isLost(c) ? 'Piedāvājums zaudēts.' : 'Rēķinu var izrakstīt pēc parakstīšanas.') + '</div></div>' : '<div class="box"><div class="box-h"><h2>Rēķini un ieņēmumi</h2><div><span class="sub">Fakturēts bez PVN ' + eur(invSum) + ' / ' + eur(c.amountHT) + '</span> ' + (mgr ? '<button class="button is-small is-primary" onclick="invForm(\'' + c.id + '\')">+ Ieņēmums</button>' : '') + '</div></div>' +
@@ -1453,6 +1508,8 @@ function vHome() {
   let k = kpi('Parakstītais apgrozījums · ' + ML, eur(sm), ca.filter(c => ymOf(c.signedDate) === ym).length + ' līgums(-i)') + kpi('Parakstītais apgrozījums · ' + y, eur(sy), ca.filter(c => c.signedDate.startsWith(y)).length + ' līgums(-i)');
   k += kpi('Aktīvie piedāvājumi', eur(sum(props, c => c.amountHT)), props.length + ' RP gaida parakstīšanu');
   if (mgr) k += kpi('Pārraidītais apgrozījums · ' + ML, eur(caDiffuseMonth(ym)), 'fakturēts + jāpieskaita') + kpi('Pārraidītais apgrozījums · ' + y, eur(caDiffuseYear(+y).reduce((s, r) => s + r.total, 0)), "gada kopsumma") + kpi('Iekasēts · ' + ML, eur(caEncaisseMonth(ym)), 'ar PVN, mēneša maksājumi');
+  const oi = incidents().filter(x => ids.has(x.contractId) && x.status === 'open');
+  k += kpi('Atvērtie pārraides incidenti', String(oi.length), sum(oi, x => x.spots) + ' nepārraidīts(-i) klips(-i)', oi.length ? 'danger' : '');
   k += kpi('Atlikums iekasēšanai (ar PVN)', eur(reste), late.length + ' kavēti · ' + toRelance.length + ' jāatgādina', late.length ? 'danger' : '') + kpi(mgr ? 'Izmaksājamās komisijas' : 'Manas saņemamās komisijas', eur(comm), 'bez PVN, nopelnītas, neizmaksātas');
   const recent = [...vis].sort((a, b) => b.signedDate.localeCompare(a.signedDate) || b.odp.localeCompare(a.odp)).slice(0, 6);
   const todo = vis.filter(c => !isLost(c) && progressOf(c).pct < 100).length;
@@ -1492,7 +1549,7 @@ function vCampaigns() {
     const c = contractOf(x.contractId), part = allocByMonth(x)[ym] || 0, sp = allocByMonth(x, 'spots')[ym] || 0, ok = isSigned(c), ong = x.antenne !== 'none' && x.start <= t && x.end >= t;
     const sel = mgr && ok ? '<div class="select is-small"><select class="' + ANT_CLS[x.antenne] + '" onchange="setAntenne(\'' + x.id + '\',this.value)">' + opts(ANTENNE, x.antenne) + '</select></div>' : '<span class="' + ANT_CLS[x.antenne] + '">' + ANTENNE.find(a => a.v === x.antenne).l + '</span>';
     const chk = x.antenne === 'none' ? '<span class="muted">—</span>' : (x.lastCheck ? '<span class="' + (stale(x) ? 'aq-sent' : '') + '">' + fdate(x.lastCheck) + '</span>' : (ong ? '<span class="aq-sent">nekad</span>' : '<span class="muted">—</span>')) + (mgr && ong ? ' <button class="button is-small is-light-orange" onclick="setChecked(\'' + x.id + '\')" title="Atzīmēt kā pārbaudītu pie ' + esc(antName()) + '">✓</button>' : '');
-    return '<tr><td><a onclick="openContract(\'' + c.id + '\')"><b>' + esc(c.odp) + '</b></a></td><td>' + esc(c.client) + ' ' + STATUS_TAG(c) + '</td><td>' + esc(x.label) + ' ' + (c.type === 'publicite' ? '' : typeTag(c)) + '</td><td>' + fdate(x.start) + ' → ' + fdate(x.end) + '</td><td class="num">' + (isComm(c) ? '<span class="muted">—</span>' : eur(x.amountHT)) + '</td><td class="num">' + (isComm(c) ? '<span class="muted">—</span>' : eur(part)) + '</td><td class="num">' + (sp ? kInt(sp) : '—') + '</td><td>' + sel + '</td><td>' + chk + '</td><td class="muted">' + (x.confirmedDate ? 'apst. ' + fdate(x.confirmedDate) : x.sentDate ? 'nos. ' + fdate(x.sentDate) : '') + '</td></tr>';
+    return '<tr><td><a onclick="openContract(\'' + c.id + '\')"><b>' + esc(c.odp) + '</b></a></td><td>' + esc(c.client) + ' ' + STATUS_TAG(c) + '</td><td>' + esc(x.label) + ' ' + (c.type === 'publicite' ? '' : typeTag(c)) + '</td><td>' + fdate(x.start) + ' → ' + fdate(x.end) + '</td><td class="num">' + (isComm(c) ? '<span class="muted">—</span>' : eur(x.amountHT)) + '</td><td class="num">' + (isComm(c) ? '<span class="muted">—</span>' : eur(part)) + '</td><td class="num">' + (sp ? kInt(sp) : '—') + '</td><td>' + sel + '</td><td>' + chk + '</td><td class="muted">' + (x.confirmedDate ? 'apst. ' + fdate(x.confirmedDate) : x.sentDate ? 'nos. ' + fdate(x.sentDate) : '') + '</td><td class="num">' + incBtn(x) + '</td></tr>';
   }).join('');
   const billed = list.filter(x => isCA(contractOf(x.contractId)));
   const bks = db.bookings.filter(b => ids.has(b.contractId) && b.start <= last && b.end >= first).sort((a, b) => a.emission.localeCompare(b.emission));
@@ -1505,8 +1562,11 @@ function vCampaigns() {
   return '<div class="box"><div class="box-h"><div class="mnav"><button class="button" onclick="ST.cm=addMonths(ST.cm,-1);renderAll()">◀</button><div class="ml">' + ymLabel(ym) + '</div><button class="button" onclick="ST.cm=addMonths(ST.cm,1);renderAll()">▶</button><button class="button is-light-orange" onclick="ST.cm=today().slice(0,7);renderAll()">Šodien</button></div>' +
     '<span class="sub">Ētera apzīmējumi: <span class="aq-none">nav ievietota</span> · <span class="aq-sent">nosūtīta (sarkans)</span> · <span class="aq-conf">apstiprināta (sarkans treknraksts)</span></span></div>' +
     (mgr && ongoingN ? '<div class="bar"><span class="sub">Pārbaude pie <b>' + esc(antName()) + '</b> : ' + ongoingN + ' aktīva(-s) kampaņa(-s)' + (staleN ? ' · <b style="color:var(--danger)">' + staleN + ' jāpārbauda</b>' : ' · aktuāls') + '</span> <button class="button is-small is-light-orange" onclick="checkAllOngoing()">✓ Atzīmēt visu kā šodien pārbaudītu</button></div>' : '') +
-    (list.length ? '<div class="tw"><table class="table is-fullwidth"><thead><tr><th>RP</th><th>Klients</th><th>Kampaņa</th><th>Periods</th><th class="num">Kopā bez PVN</th><th class="num">Mēnesī bez PVN</th><th class="num">Mēneša klipi</th><th>Ētera statuss</th><th>Pārbaudīts</th><th></th></tr></thead><tbody>' + rows + '</tbody>' +
-      '<tfoot><tr><td colspan="5">Pārraidīts mēnesī (proporcionāli dienām, bez komunikācijas)</td><td class="num">' + eur(sum(billed, x => allocByMonth(x)[ym] || 0)) + '</td><td class="num">' + kInt(sum(list, x => allocByMonth(x, 'spots')[ym] || 0)) + '</td><td colspan="3"></td></tr></tfoot></table></div>' : '<div class="empty">Nav pārraidītu kampaņu: ' + ymLabel(ym) + '.</div>') + '</div>' +
+    (list.length ? '<div class="tw"><table class="table is-fullwidth"><thead><tr><th>RP</th><th>Klients</th><th>Kampaņa</th><th>Periods</th><th class="num">Kopā bez PVN</th><th class="num">Mēnesī bez PVN</th><th class="num">Mēneša klipi</th><th>Ētera statuss</th><th>Pārbaudīts</th><th></th><th></th></tr></thead><tbody>' + rows + '</tbody>' +
+      '<tfoot><tr><td colspan="5">Pārraidīts mēnesī (proporcionāli dienām, bez komunikācijas)</td><td class="num">' + eur(sum(billed, x => allocByMonth(x)[ym] || 0)) + '</td><td class="num">' + kInt(sum(list, x => allocByMonth(x, 'spots')[ym] || 0)) + '</td><td colspan="4"></td></tr></tfoot></table></div>' : '<div class="empty">Nav pārraidītu kampaņu: ' + ymLabel(ym) + '.</div>') + '</div>' +
+    (() => { const li = visIncidents().filter(x => ymOf(x.date) === ym || x.status === 'open').sort((a, b) => b.date.localeCompare(a.date)), op = li.filter(x => x.status === 'open');
+      return '<div class="box"><div class="box-h"><h2>Pārraides incidenti · ' + ymLabel(ym) + '</h2><span class="sub">Nepārraidīti reklāmas klipi (piem. kļūda pārraides programmā)' + (op.length ? ' · <b style="color:var(--danger)">' + op.length + ' atvērts(-i), ' + sum(op, x => x.spots) + ' klips(-i) jāpārraida</b>' : '') + '</span></div>' +
+        (li.length ? incTable(li, true) : '<div class="empty">Šomēnes nav incidentu ✅</div>') + '<p class="help muted mt-2">Incidentu reģistrē ar pogu „⚠ Incidents” kampaņas rindā.</p></div>'; })() +
     '<div class="grid2"><div class="box"><div class="box-h"><h2>Atlikušās kampaņas</h2><span class="sub">Atlikums pārraidei pa klientiem (parakstītie līgumi)</span></div>' +
     (restRows ? '<div class="tw"><table class="table is-fullwidth is-hoverable"><thead><tr><th>Klients</th><th class="num">Līgumi</th><th class="num">Atlikums pārraidei bez PVN</th><th>Līdz</th></tr></thead><tbody>' + restRows + '</tbody></table></div>' : '<div class="empty">Viss pārraidīts.</div>') + '</div>' +
     '<div class="box"><div class="box-h"><h2>Sponsorētie raidījumi · ' + ymLabel(ym) + '</h2></div>' +
@@ -1799,6 +1859,14 @@ function loadDemo(silent) {
     const rate = r[2] === 's2' ? 10 : r[2] === 's3' ? 15 : 0;
     iv(q, cc, true, r[0] - 5, r[3], rate, [[r[0] - 30, n % 3 === 0 ? 'CHQ' : 'VIRMT', ttc(r[3])]], [], rate ? [[r[0] - 40, round2(r[3] * rate / 100)]] : []);
   });
+
+  /* ---- Pārraides incidenti (izdomāti) ---- */
+  const inc = (camp, ago, slot, n, cause, status, resolution, note) => { const x = db.campaigns.find(k => k.id === camp.id); incidents().push({ id: uid(), campaignId: x.id, contractId: x.contractId, date: addDays(t, -ago), slot, spots: n, cause, status, resolution: resolution || '', note: note || '', resolvedDate: status === 'open' ? '' : addDays(t, -ago + 2), createdAt: new Date().toISOString(), by: 'Nathalie' }); };
+  inc(ca, 3, '08:15', 2, 'Programmatūras kļūda (bug)', 'open', '', 'Pēc atjauninājuma pārraides programma izlaida visu reklāmas pauzi');
+  inc(ci, 1, '09:40', 1, 'Programmatūras kļūda (bug)', 'open', '', 'Klips netika atskaņots, ēterā 30 s klusuma');
+  inc(cf, 12, '17:45', 1, 'Tehniska kļūme raidītājā', 'redone', 'Pārraidīts atkārtoti ' + fdate(addDays(t, -10)) + ' 17:50', 'Īss raidītāja pārtraukums');
+  inc(ch, 60, '12:30', 3, 'Klips nav ievietots grafikā', 'credit', 'Kredītrēķins 135,00 € bez PVN', 'Klips netika pievienots dienas grafikam');
+  inc(ck, 18, '10:00', 1, 'Programmas izmaiņas ēterā', 'closed', 'Klients piekrita bez kompensācijas', 'Tiešraides pagarinājums, pauze pārcelta');
 
   /* ---- Klientu kontakti (izdomāti) ---- */
   info('[DEMO] Maiznīca Saulīte', 'Anna Bērziņa', '+371 2000 0101', 'anna.berzina@example.com', 'Dod priekšroku rīta klipiem.');
