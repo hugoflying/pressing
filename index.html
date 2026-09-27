@@ -2,7 +2,8 @@
 <html lang="lv" data-theme="light">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="theme-color" content="#FFFBF4">
 <title>Commercial Tool</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Barlow+Condensed:wght@700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
@@ -154,6 +155,7 @@ body{color:var(--ink);min-height:100vh;font-family:'Inter',sans-serif;font-size:
 .step small{color:var(--ink-soft);}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
 @media(max-width:1000px){.grid2{grid-template-columns:1fr;}}
+.grid2>*,.column{min-width:0;}
 .tabs ul{border-bottom-color:var(--border);}
 .tabs li.is-active a{color:var(--orange-dark);border-bottom-color:var(--orange);font-weight:700;}
 .tabs a{color:var(--ink-soft);font-weight:600;cursor:pointer;}
@@ -185,6 +187,88 @@ body{color:var(--ink);min-height:100vh;font-family:'Inter',sans-serif;font-size:
 .tip-k{width:12px;height:0;border-top:3px solid;display:inline-block;flex-shrink:0;}
 .dl.up{color:var(--ok);font-weight:700;}
 .dl.dn{color:var(--danger);font-weight:700;}
+
+/* ───────────────────────── TĀLRUNIS (≤ 768 px) ───────────────────────── */
+@media (max-width:768px){
+  :root{--hdr-h:58px;}
+  body{font-size:13px;}
+  .hdr{grid-template-columns:auto 1fr auto;border-bottom-width:2px;}
+  .hdr-brand{border-right:none;padding:0 12px;gap:8px;}
+  .hdr-brand svg{width:32px;height:32px;}
+  .hdr-brand-txt{display:flex;font-size:14px;}
+  /* navigācija kļūst par apakšējo cilņu joslu */
+  .hdr-nav{position:fixed;left:0;right:0;bottom:0;height:calc(62px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);
+    background:var(--hdr-bg);border-top:2px solid var(--orange);box-shadow:0 -2px 10px rgba(51,41,26,.08);z-index:200;
+    justify-content:flex-start;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+  .hdr-nav::-webkit-scrollbar{display:none;}
+  .hdr-nav .nav-btn{flex:1 0 76px;padding:0 6px;gap:3px;font-size:9px;letter-spacing:0;border-bottom:none;border-top:3px solid transparent;}
+  .hdr-nav .nav-btn.active{border-top-color:var(--orange);}
+  .hdr-nav .nav-btn::after{display:none;}
+  .hdr-nav .nav-btn-ico{font-size:20px;}
+  .hdr-nav .nav-btn-txt{font-size:9px;line-height:1.1;}
+  .nav-btn-stripe{justify-self:end;padding:0 14px;gap:2px;}
+  .nav-btn-stripe .nav-btn-ico{font-size:20px;}
+  .nav-btn-stripe .nav-btn-txt{display:none;}
+  .badge{top:6px;right:4px;}
+  .hdr-right{padding:0 10px;gap:3px;align-items:flex-end;}
+  .hdr-clock{font-size:17px;}
+  .hdr-role{display:none;}
+  .hdr-user select{max-width:104px;font-size:10px;}
+  /* lapas */
+  .page{padding:12px 10px calc(84px + env(safe-area-inset-bottom));}
+  .container.is-fluid{padding-left:0;padding-right:0;}
+  #accueil > .box-h h2{font-size:22px !important;}
+  .kpis,.kpis.k6,.kpis.cmp{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:14px;}
+  .kpi{padding:9px 10px;}
+  .kpi-l{font-size:9.5px;letter-spacing:.02em;}
+  .kpi-v,.kpis.k6 .kpi-v,.kpis.cmp .kpi-v{font-size:21px;}
+  .kpi-s{font-size:10.5px;}
+  .box{padding:12px;margin-bottom:12px;border-radius:10px;}
+  .box-h{margin-bottom:10px;gap:8px;}
+  .box-h h2{font-size:17px;}
+  .box-h .sub{font-size:11px;}
+  .bar{gap:8px;}
+  .bar .input{max-width:100% !important;flex:1 1 100%;}
+  .bar .select,.bar .select select{flex:1 1 calc(50% - 4px);width:100%;}
+  .bar .buttons{flex-wrap:wrap;}
+  .mnav{flex-wrap:wrap;gap:6px;}
+  .mnav .ml{font-size:19px;min-width:0;flex:1;}
+  .al{padding:8px 10px;font-size:12.5px;}
+  .step{grid-template-columns:22px 24px 1fr;}
+  .step > :last-child{grid-column:3;}
+  /* tabulas: horizontāla ritināšana, pirmā kolonna fiksēta */
+  .tw{-webkit-overflow-scrolling:touch;margin:0 -12px;padding:0 12px;}
+  .table{font-size:12px;}
+  .table td,.table th{padding:.4em .5em;}
+  .tw .table td:first-child,.tw .table th:first-child{position:sticky;left:0;z-index:1;background:var(--card);box-shadow:1px 0 0 var(--border);}
+  .tw .table thead th:first-child,.tw .table tfoot td:first-child{background:#FFFBF4;}
+  .tw .table tr.clickable:hover td:first-child{background:var(--orange-25);}
+  .button.is-small{font-size:.72rem;}
+  /* logi pa visu ekrānu */
+  .modal-card,.modal-card.wide{width:100vw;max-height:100vh;height:100%;margin:0;border-radius:0;}
+  .modal-card-head{padding:12px 14px;border-radius:0;}
+  .modal-card-title{font-size:18px;line-height:1.15;}
+  .modal-card-body{padding:12px;}
+  .modal-card-foot{padding:10px 12px calc(10px + env(safe-area-inset-bottom));flex-wrap:wrap;border-radius:0;}
+  .modal-card-foot .button{flex:1;}
+  .modal .input,.modal select,.modal textarea{font-size:16px;} /* bez automātiskas tuvināšanas iOS */
+  .modal-card-head .modal-card-title{flex:1 1 auto;min-width:0;overflow-wrap:anywhere;margin-right:8px;}
+  .modal-card-head .delete{flex-shrink:0;width:28px;height:28px;max-width:28px;max-height:28px;}
+  .columns.is-multiline{display:flex;flex-wrap:wrap;margin:-6px;}
+  .columns.is-multiline>.column{padding:6px;}
+  .columns.is-multiline>.column.is-3,.columns.is-multiline>.column.is-4{flex:0 0 50%;width:50%;}
+  .columns.is-multiline>.column.is-12{flex:0 0 100%;width:100%;}
+  .tw .table td:first-child{white-space:nowrap;}
+  .modal-card-foot{background:var(--hdr-bg);}
+  .dropzone{flex-direction:column;text-align:center;padding:20px 12px;}
+  .toast{left:10px;right:10px;bottom:calc(74px + env(safe-area-inset-bottom));max-width:none;}
+  .legend{gap:10px;font-size:11px;}
+  .chart text{font-size:13px;}
+}
+@media (max-width:380px){
+  .hdr-brand-txt{display:none;}
+  .kpi-v,.kpis.k6 .kpi-v,.kpis.cmp .kpi-v{font-size:18px;}
+}
 </style>
 </head>
 <body>
